@@ -1,0 +1,42 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import ContentCard from '@/components/ContentCard.astro';
+import { getAllTags, getVisibleNotes, getVisiblePosts, noteTitle, noteUrl, postUrl } from '@/lib/content';
+
+export async function getStaticPaths() {
+  const tags = await getAllTags();
+  return tags.map((tag) => ({ params: { tag } }));
+}
+
+const tag = Astro.params.tag ?? '';
+const decodedTag = decodeURIComponent(tag);
+const posts = (await getVisiblePosts()).filter((post) => post.data.tags.includes(decodedTag));
+const notes = (await getVisibleNotes()).filter((note) => note.data.tags.includes(decodedTag));
+const items = [
+  ...posts.map((post) => ({
+    href: postUrl(post),
+    title: post.data.title,
+    description: post.data.description,
+    date: post.data.pubDate,
+    type: 'Post',
+  })),
+  ...notes.map((note) => ({
+    href: noteUrl(note),
+    title: noteTitle(note),
+    date: note.data.pubDate,
+    type: 'Note',
+  })),
+].sort((a, b) => b.date.valueOf() - a.date.valueOf());
+---
+
+<BaseLayout title={`Tag: ${decodedTag}`} description={`Posts and Notes tagged ${decodedTag}.`}>
+  <header class="shell listing-header">
+    <p class="eyebrow">Tag Page</p>
+    <h1>{decodedTag}</h1>
+  </header>
+  <section class="shell section">
+    <div class="content-grid">
+      {items.map((item) => <ContentCard {...item} />)}
+    </div>
+  </section>
+</BaseLayout>

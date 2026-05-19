@@ -1,0 +1,20 @@
+---
+import { render } from 'astro:content';
+import ContentLayout from '@/layouts/ContentLayout.astro';
+import { getVisiblePages } from '@/lib/content';
+
+export async function getStaticPaths() {
+  const pages = await getVisiblePages();
+  return pages.map((page) => ({
+    params: { slug: page.id },
+    props: { page },
+  }));
+}
+
+const { page } = Astro.props;
+const { Content } = await render(page);
+---
+
+<ContentLayout title={page.data.title} description={page.data.description} type={page.data.draft ? 'Draft Page' : 'Page'}>
+  <Content />
+</ContentLayout>

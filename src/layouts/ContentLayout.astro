@@ -1,0 +1,41 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import { formatDate, tagUrl } from '@/lib/content';
+
+type Props = {
+  title: string;
+  description?: string;
+  date?: Date;
+  tags?: string[];
+  type: string;
+  discussionLinks?: { label: string; url: string }[];
+};
+
+const { title, description, date, tags = [], type, discussionLinks = [] } = Astro.props;
+---
+
+<BaseLayout title={title} description={description}>
+  <article class="article shell">
+    <header class="article__header">
+      <p class="eyebrow">{type}{date ? ` / ${formatDate(date)}` : ''}</p>
+      <h1>{title}</h1>
+      {description ? <p class="muted">{description}</p> : null}
+      {tags.length ? (
+        <ul class="pill-list" aria-label="Tags">
+          {tags.map((tag) => <li><a class="pill" href={tagUrl(tag)}>{tag}</a></li>)}
+        </ul>
+      ) : null}
+    </header>
+    <div class="article__body">
+      <slot />
+    </div>
+    {discussionLinks.length ? (
+      <footer class="article__footer">
+        <p class="eyebrow">Discuss</p>
+        <ul class="pill-list">
+          {discussionLinks.map((link) => <li><a class="pill" href={link.url}>{link.label}</a></li>)}
+        </ul>
+      </footer>
+    ) : null}
+  </article>
+</BaseLayout>

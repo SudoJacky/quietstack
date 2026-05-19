@@ -1,0 +1,21 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import ContentCard from '@/components/ContentCard.astro';
+import { getVisiblePosts, postUrl } from '@/lib/content';
+
+const posts = await getVisiblePosts();
+---
+
+<BaseLayout title="Posts" description="Long-form writing from Quietstack.">
+  <header class="shell listing-header">
+    <p class="eyebrow">Main publishing flow</p>
+    <h1>Posts</h1>
+  </header>
+  <section class="shell section">
+    <div class="content-grid">
+      {posts.map((post) => (
+        <ContentCard href={postUrl(post)} title={post.data.title} description={post.data.description} date={post.data.pubDate} type="Post" />
+      ))}
+    </div>
+  </section>
+</BaseLayout>

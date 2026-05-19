@@ -1,0 +1,33 @@
+---
+import SiteNav from '@/components/SiteNav.astro';
+import { site } from '@/lib/site';
+import '@/styles/global.css';
+import '@/themes/default/theme.css';
+
+type Props = {
+  title?: string;
+  description?: string;
+};
+
+const pageTitle = Astro.props.title ? `${Astro.props.title} - ${site.name}` : site.name;
+const description = Astro.props.description ?? site.description;
+---
+
+<!doctype html>
+<html lang={site.language}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+    <title>{pageTitle}</title>
+    <link rel="alternate" type="application/rss+xml" title={`${site.name} Posts`} href="/rss.xml" />
+    <link rel="alternate" type="application/rss+xml" title={`${site.name} Notes`} href="/notes/rss.xml" />
+  </head>
+  <body>
+    <SiteNav />
+    <main>
+      <slot />
+    </main>
+  </body>
+</html>

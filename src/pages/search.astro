@@ -1,0 +1,62 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Search" description="Search Posts and Notes.">
+  <header class="shell listing-header">
+    <p class="eyebrow">Static Search Index</p>
+    <h1>Search</h1>
+  </header>
+  <section class="shell section">
+    <input class="search-box" id="search-input" type="search" placeholder="Search posts and notes" autocomplete="off" />
+    <div id="search-results" class="content-grid" style="margin-top: 1rem;"></div>
+  </section>
+  <script>
+    type SearchItem = {
+      type: string;
+      title: string;
+      description?: string;
+      url: string;
+      date: string;
+      tags: string[];
+      body: string;
+    };
+
+    const input = document.querySelector('#search-input');
+    const results = document.querySelector('#search-results');
+    const items = (await fetch('/search-index.json').then((response) => response.json())) as SearchItem[];
+
+    function escapeHtml(value: string | undefined) {
+      return String(value).replace(/[&<>"']/g, (character) => {
+        const entities: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+        return entities[character];
+      });
+    }
+
+    function render(query: string) {
+      const normalized = query.trim().toLowerCase();
+      const matches = normalized
+        ? items.filter((item) => [item.title, item.description, item.body, item.tags.join(' ')].join(' ').toLowerCase().includes(normalized))
+        : items.slice(0, 8);
+
+      if (!results) return;
+
+      results.innerHTML = matches
+        .map(
+          (item) => `
+            <a class="card" href="${item.url}">
+              <div class="card__meta">${item.type} / ${new Date(item.date).toLocaleDateString('zh-CN')}</div>
+              <h2>${escapeHtml(item.title)}</h2>
+              ${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}
+            </a>
+          `,
+        )
+        .join('');
+    }
+
+    if (input instanceof HTMLInputElement) {
+      input.addEventListener('input', () => render(input.value));
+    }
+    render('');
+  </script>
+</BaseLayout>

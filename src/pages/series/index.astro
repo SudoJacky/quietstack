@@ -1,0 +1,19 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import ContentCard from '@/components/ContentCard.astro';
+import { getPublicSeries, seriesUrl } from '@/lib/content';
+
+const series = await getPublicSeries();
+---
+
+<BaseLayout title="Series" description="Stable reading paths for related Posts.">
+  <header class="shell listing-header">
+    <p class="eyebrow">Stable reading paths</p>
+    <h1>Series</h1>
+  </header>
+  <section class="shell section">
+    <div class="content-grid">
+      {series.map((item) => <ContentCard href={seriesUrl(item.id)} title={item.data.title} description={item.data.description} type="Series" />)}
+    </div>
+  </section>
+</BaseLayout>

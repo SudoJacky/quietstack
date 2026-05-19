@@ -1,0 +1,18 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getAllTags, tagUrl } from '@/lib/content';
+
+const tags = await getAllTags();
+---
+
+<BaseLayout title="Tags" description="Editable discovery labels for Posts and Notes.">
+  <header class="shell listing-header">
+    <p class="eyebrow">Discovery labels</p>
+    <h1>Tags</h1>
+  </header>
+  <section class="shell section">
+    <ul class="pill-list">
+      {tags.map((tag) => <li><a class="pill" href={tagUrl(tag)}>{tag}</a></li>)}
+    </ul>
+  </section>
+</BaseLayout>

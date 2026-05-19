@@ -1,0 +1,21 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import ContentCard from '@/components/ContentCard.astro';
+import { getVisibleNotes, noteTitle, noteUrl } from '@/lib/content';
+
+const notes = await getVisibleNotes();
+---
+
+<BaseLayout title="Notes" description="Short-form notes from Quietstack.">
+  <header class="shell listing-header">
+    <p class="eyebrow">Short-form publishing flow</p>
+    <h1>Notes</h1>
+  </header>
+  <section class="shell section">
+    <div class="content-grid">
+      {notes.map((note) => (
+        <ContentCard href={noteUrl(note)} title={noteTitle(note)} date={note.data.pubDate} type="Note" />
+      ))}
+    </div>
+  </section>
+</BaseLayout>

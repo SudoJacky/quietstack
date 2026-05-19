@@ -1,0 +1,22 @@
+---
+import { formatDate } from '@/lib/content';
+
+type Props = {
+  href: string;
+  title: string;
+  description?: string;
+  date?: Date;
+  type?: string;
+};
+
+const { href, title, description, date, type } = Astro.props;
+---
+
+<a class="card" href={href}>
+  <div class="card__meta">
+    {type ? <span>{type}</span> : null}
+    {date ? <span>{type ? ' / ' : ''}{formatDate(date)}</span> : null}
+  </div>
+  <h2>{title}</h2>
+  {description ? <p>{description}</p> : null}
+</a>

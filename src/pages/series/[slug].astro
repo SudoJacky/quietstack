@@ -1,0 +1,29 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import ContentCard from '@/components/ContentCard.astro';
+import { getPublicSeries, getVisiblePosts, postUrl } from '@/lib/content';
+
+export async function getStaticPaths() {
+  const series = await getPublicSeries();
+  return series.map((item) => ({
+    params: { slug: item.id },
+    props: { item },
+  }));
+}
+
+const { item } = Astro.props;
+const posts = (await getVisiblePosts()).filter((post) => post.data.series === item.id);
+---
+
+<BaseLayout title={item.data.title} description={item.data.description}>
+  <header class="shell listing-header">
+    <p class="eyebrow">Series Page</p>
+    <h1>{item.data.title}</h1>
+    {item.data.description ? <p class="muted">{item.data.description}</p> : null}
+  </header>
+  <section class="shell section">
+    <div class="content-grid">
+      {posts.map((post) => <ContentCard href={postUrl(post)} title={post.data.title} description={post.data.description} date={post.data.pubDate} type="Post" />)}
+    </div>
+  </section>
+</BaseLayout>

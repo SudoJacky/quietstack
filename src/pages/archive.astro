@@ -1,0 +1,33 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import ContentCard from '@/components/ContentCard.astro';
+import { getVisibleNotes, getVisiblePosts, noteTitle, noteUrl, postUrl } from '@/lib/content';
+
+const items = [
+  ...(await getVisiblePosts()).map((post) => ({
+    href: postUrl(post),
+    title: post.data.title,
+    description: post.data.description,
+    date: post.data.pubDate,
+    type: 'Post',
+  })),
+  ...(await getVisibleNotes()).map((note) => ({
+    href: noteUrl(note),
+    title: noteTitle(note),
+    date: note.data.pubDate,
+    type: 'Note',
+  })),
+].sort((a, b) => b.date.valueOf() - a.date.valueOf());
+---
+
+<BaseLayout title="Archive" description="Posts and Notes in reverse chronological order.">
+  <header class="shell listing-header">
+    <p class="eyebrow">Chronological index</p>
+    <h1>Archive</h1>
+  </header>
+  <section class="shell section">
+    <div class="content-grid">
+      {items.map((item) => <ContentCard {...item} />)}
+    </div>
+  </section>
+</BaseLayout>

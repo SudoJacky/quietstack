@@ -1,7 +1,8 @@
 ---
 import { render } from 'astro:content';
 import ContentLayout from '@/layouts/ContentLayout.astro';
-import { getVisiblePages } from '@/lib/content';
+import { getVisiblePages, pagePath } from '@/lib/content';
+import { absoluteUrl } from '@/lib/url';
 
 export async function getStaticPaths() {
   const pages = await getVisiblePages();
@@ -15,6 +16,12 @@ const { page } = Astro.props;
 const { Content } = await render(page);
 ---
 
-<ContentLayout title={page.data.title} description={page.data.description} type={page.data.draft ? 'Draft Page' : 'Page'}>
+<ContentLayout
+  title={page.data.title}
+  description={page.data.description}
+  canonicalUrl={absoluteUrl(pagePath(page))}
+  cover={page.data.cover ? { image: page.data.cover.image, alt: page.data.cover.alt } : undefined}
+  type={page.data.draft ? 'Draft Page' : 'Page'}
+>
   <Content />
 </ContentLayout>

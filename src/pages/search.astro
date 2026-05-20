@@ -1,30 +1,41 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import { paths } from '@/lib/site';
+import { absoluteUrl, withBase } from '@/lib/url';
+
+const searchIndexUrl = withBase('/search-index.json');
 ---
 
-<BaseLayout title="Search" description="Search Posts and Notes.">
+<BaseLayout title="Search" description="Search Posts and Notes." canonicalUrl={absoluteUrl(paths.search)}>
   <header class="shell listing-header">
     <p class="eyebrow">Static Search Index</p>
     <h1>Search</h1>
   </header>
   <section class="shell section">
     <input class="search-box" id="search-input" type="search" placeholder="Search posts and notes" autocomplete="off" />
+    <div id="search-tags" class="filter-row" aria-label="Filter by tag"></div>
     <div id="search-results" class="content-grid" style="margin-top: 1rem;"></div>
   </section>
+  <span hidden data-search-index-url={searchIndexUrl}></span>
   <script>
     type SearchItem = {
       type: string;
       title: string;
       description?: string;
+      excerpt?: string;
       url: string;
       date: string;
       tags: string[];
-      body: string;
+      searchText?: string;
     };
 
     const input = document.querySelector('#search-input');
     const results = document.querySelector('#search-results');
-    const items = (await fetch('/search-index.json').then((response) => response.json())) as SearchItem[];
+    const tagFilters = document.querySelector('#search-tags');
+    const searchIndexUrl = document.querySelector('[data-search-index-url]')?.getAttribute('data-search-index-url') ?? '/search-index.json';
+    const items = (await fetch(searchIndexUrl).then((response) => response.json())) as SearchItem[];
+    const tags = [...new Set(items.flatMap((item) => item.tags))].sort((a, b) => a.localeCompare(b));
+    let activeTag = '';
 
     function escapeHtml(value: string | undefined) {
       return String(value).replace(/[&<>"']/g, (character) => {
@@ -33,30 +44,59 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
       });
     }
 
+    function resultDescription(item: SearchItem) {
+      return item.description ?? item.excerpt ?? '';
+    }
+
+    function renderTags() {
+      if (!tagFilters) return;
+      tagFilters.innerHTML = [
+        `<button class="pill ${activeTag ? '' : 'is-active'}" type="button" data-tag="" aria-pressed="${activeTag ? 'false' : 'true'}">All</button>`,
+        ...tags.map((tag) => `<button class="pill ${activeTag === tag ? 'is-active' : ''}" type="button" data-tag="${escapeHtml(tag)}" aria-pressed="${activeTag === tag ? 'true' : 'false'}">${escapeHtml(tag)}</button>`),
+      ].join('');
+    }
+
     function render(query: string) {
       const normalized = query.trim().toLowerCase();
-      const matches = normalized
-        ? items.filter((item) => [item.title, item.description, item.body, item.tags.join(' ')].join(' ').toLowerCase().includes(normalized))
-        : items.slice(0, 8);
+      const matches = items
+        .filter((item) => !activeTag || item.tags.includes(activeTag))
+        .filter((item) => {
+          if (!normalized) return true;
+          return [item.title, item.description, item.excerpt, item.searchText, item.tags.join(' ')]
+            .join(' ')
+            .toLowerCase()
+            .includes(normalized);
+        })
+        .slice(0, normalized || activeTag ? 24 : 8);
 
       if (!results) return;
 
-      results.innerHTML = matches
+      results.innerHTML = matches.length
+        ? matches
         .map(
           (item) => `
             <a class="card" href="${item.url}">
               <div class="card__meta">${item.type} / ${new Date(item.date).toLocaleDateString('zh-CN')}</div>
               <h2>${escapeHtml(item.title)}</h2>
-              ${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}
+              ${resultDescription(item) ? `<p>${escapeHtml(resultDescription(item))}</p>` : ''}
             </a>
           `,
         )
-        .join('');
+        .join('')
+        : `<p class="empty-state">No matching Posts or Notes.</p>`;
     }
 
     if (input instanceof HTMLInputElement) {
       input.addEventListener('input', () => render(input.value));
     }
+    tagFilters?.addEventListener('click', (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLButtonElement)) return;
+      activeTag = target.dataset.tag ?? '';
+      renderTags();
+      render(input instanceof HTMLInputElement ? input.value : '');
+    });
+    renderTags();
     render('');
   </script>
 </BaseLayout>

@@ -2,11 +2,13 @@
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import ContentCard from '@/components/ContentCard.astro';
 import { getVisibleNotes, noteTitle, noteUrl } from '@/lib/content';
+import { paths } from '@/lib/site';
+import { absoluteUrl } from '@/lib/url';
 
 const notes = await getVisibleNotes();
 ---
 
-<BaseLayout title="Notes" description="Short-form notes from Quietstack.">
+<BaseLayout title="Notes" description="Short-form notes from Quietstack." canonicalUrl={absoluteUrl(paths.notes)}>
   <header class="shell listing-header">
     <p class="eyebrow">Short-form publishing flow</p>
     <h1>Notes</h1>

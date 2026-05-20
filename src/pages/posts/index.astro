@@ -2,11 +2,13 @@
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import ContentCard from '@/components/ContentCard.astro';
 import { getVisiblePosts, postUrl } from '@/lib/content';
+import { paths } from '@/lib/site';
+import { absoluteUrl } from '@/lib/url';
 
 const posts = await getVisiblePosts();
 ---
 
-<BaseLayout title="Posts" description="Long-form writing from Quietstack.">
+<BaseLayout title="Posts" description="Long-form writing from Quietstack." canonicalUrl={absoluteUrl(paths.posts)}>
   <header class="shell listing-header">
     <p class="eyebrow">Main publishing flow</p>
     <h1>Posts</h1>

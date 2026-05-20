@@ -1,7 +1,8 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import ContentCard from '@/components/ContentCard.astro';
-import { getAllTags, getVisibleNotes, getVisiblePosts, noteTitle, noteUrl, postUrl } from '@/lib/content';
+import { getAllTags, getVisibleNotes, getVisiblePosts, noteTitle, noteUrl, postUrl, tagPath } from '@/lib/content';
+import { absoluteUrl } from '@/lib/url';
 
 export async function getStaticPaths() {
   const tags = await getAllTags();
@@ -29,7 +30,7 @@ const items = [
 ].sort((a, b) => b.date.valueOf() - a.date.valueOf());
 ---
 
-<BaseLayout title={`Tag: ${decodedTag}`} description={`Posts and Notes tagged ${decodedTag}.`}>
+<BaseLayout title={`Tag: ${decodedTag}`} description={`Posts and Notes tagged ${decodedTag}.`} canonicalUrl={absoluteUrl(tagPath(decodedTag))}>
   <header class="shell listing-header">
     <p class="eyebrow">Tag Page</p>
     <h1>{decodedTag}</h1>

@@ -221,6 +221,28 @@
   color: var(--text-primary);
 }
 
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.filter-row .pill {
+  cursor: pointer;
+}
+
+.pill.is-active {
+  border-color: color-mix(in srgb, var(--accent) 65%, var(--border));
+  background: color-mix(in srgb, var(--accent) 13%, var(--surface-solid));
+  color: var(--text-primary);
+}
+
+.empty-state {
+  margin: 0;
+  color: var(--text-muted);
+}
+
 @media (max-width: 760px) {
   .site-header__inner,
   .site-nav {

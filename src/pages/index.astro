@@ -2,13 +2,14 @@
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import ContentCard from '@/components/ContentCard.astro';
 import { getVisibleNotes, getVisiblePosts, noteTitle, noteUrl, postUrl } from '@/lib/content';
-import { routes, site } from '@/lib/site';
+import { paths, routes, site } from '@/lib/site';
+import { absoluteUrl } from '@/lib/url';
 
 const posts = (await getVisiblePosts()).slice(0, 4);
 const notes = (await getVisibleNotes()).slice(0, 2);
 ---
 
-<BaseLayout title="Home" description={site.description}>
+<BaseLayout title="Home" description={site.description} canonicalUrl={absoluteUrl(paths.home)}>
   <section class="hero">
     <div class="shell hero__grid">
       <div>

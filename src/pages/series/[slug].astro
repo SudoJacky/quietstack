@@ -1,7 +1,8 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import ContentCard from '@/components/ContentCard.astro';
-import { getPublicSeries, getVisiblePosts, postUrl } from '@/lib/content';
+import { getPublicSeries, getVisiblePosts, postUrl, seriesPath } from '@/lib/content';
+import { absoluteUrl } from '@/lib/url';
 
 export async function getStaticPaths() {
   const series = await getPublicSeries();
@@ -15,7 +16,7 @@ const { item } = Astro.props;
 const posts = (await getVisiblePosts()).filter((post) => post.data.series === item.id);
 ---
 
-<BaseLayout title={item.data.title} description={item.data.description}>
+<BaseLayout title={item.data.title} description={item.data.description} canonicalUrl={absoluteUrl(seriesPath(item.id))}>
   <header class="shell listing-header">
     <p class="eyebrow">Series Page</p>
     <h1>{item.data.title}</h1>

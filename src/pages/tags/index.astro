@@ -1,11 +1,13 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getAllTags, tagUrl } from '@/lib/content';
+import { paths } from '@/lib/site';
+import { absoluteUrl } from '@/lib/url';
 
 const tags = await getAllTags();
 ---
 
-<BaseLayout title="Tags" description="Editable discovery labels for Posts and Notes.">
+<BaseLayout title="Tags" description="Editable discovery labels for Posts and Notes." canonicalUrl={absoluteUrl(paths.tags)}>
   <header class="shell listing-header">
     <p class="eyebrow">Discovery labels</p>
     <h1>Tags</h1>

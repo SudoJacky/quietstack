@@ -5,16 +5,31 @@ import { formatDate, tagUrl } from '@/lib/content';
 type Props = {
   title: string;
   description?: string;
+  canonicalUrl?: string;
+  cover?: {
+    image: string;
+    alt: string;
+  };
   date?: Date;
+  updatedDate?: Date;
   tags?: string[];
   type: string;
   discussionLinks?: { label: string; url: string }[];
 };
 
-const { title, description, date, tags = [], type, discussionLinks = [] } = Astro.props;
+const { title, description, canonicalUrl, cover, date, updatedDate, tags = [], type, discussionLinks = [] } = Astro.props;
 ---
 
-<BaseLayout title={title} description={description}>
+<BaseLayout
+  title={title}
+  description={description}
+  canonicalUrl={canonicalUrl}
+  image={cover ? { url: cover.image, alt: cover.alt } : undefined}
+  ogType={type.includes('Post') || type.includes('Note') ? 'article' : 'website'}
+  publishedTime={date}
+  modifiedTime={updatedDate}
+  tags={tags}
+>
   <article class="article shell">
     <header class="article__header">
       <p class="eyebrow">{type}{date ? ` / ${formatDate(date)}` : ''}</p>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Quietstack social preview</title>
+  <desc id="desc">A quiet editorial preview image for the Quietstack website.</desc>
+  <rect width="1200" height="630" fill="#f5f5f7"/>
+  <rect x="96" y="84" width="1008" height="462" rx="44" fill="#ffffff"/>
+  <path d="M176 222h536M176 306h392M176 390h468" stroke="#1d1d1f" stroke-width="34" stroke-linecap="round"/>
+  <circle cx="934" cy="238" r="84" fill="#0071e3"/>
+  <path d="M856 390h156" stroke="#86868b" stroke-width="30" stroke-linecap="round"/>
+</svg>

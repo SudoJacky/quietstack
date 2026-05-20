@@ -2,11 +2,13 @@
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import ContentCard from '@/components/ContentCard.astro';
 import { getPublicSeries, seriesUrl } from '@/lib/content';
+import { paths } from '@/lib/site';
+import { absoluteUrl } from '@/lib/url';
 
 const series = await getPublicSeries();
 ---
 
-<BaseLayout title="Series" description="Stable reading paths for related Posts.">
+<BaseLayout title="Series" description="Stable reading paths for related Posts." canonicalUrl={absoluteUrl(paths.series)}>
   <header class="shell listing-header">
     <p class="eyebrow">Stable reading paths</p>
     <h1>Series</h1>

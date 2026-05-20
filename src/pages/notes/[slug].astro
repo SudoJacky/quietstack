@@ -1,7 +1,8 @@
 ---
 import { render } from 'astro:content';
 import ContentLayout from '@/layouts/ContentLayout.astro';
-import { getVisibleNotes } from '@/lib/content';
+import { getVisibleNotes, notePath } from '@/lib/content';
+import { absoluteUrl } from '@/lib/url';
 
 export async function getStaticPaths() {
   const notes = await getVisibleNotes();
@@ -15,6 +16,6 @@ const { note } = Astro.props;
 const { Content } = await render(note);
 ---
 
-<ContentLayout title={note.data.title ?? 'Note'} date={note.data.pubDate} tags={note.data.tags} type={note.data.draft ? 'Draft Note' : 'Note'}>
+<ContentLayout title={note.data.title ?? 'Note'} canonicalUrl={absoluteUrl(notePath(note))} date={note.data.pubDate} tags={note.data.tags} type={note.data.draft ? 'Draft Note' : 'Note'}>
   <Content />
 </ContentLayout>

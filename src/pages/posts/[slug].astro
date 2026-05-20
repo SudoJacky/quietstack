@@ -1,7 +1,8 @@
 ---
 import { render } from 'astro:content';
 import ContentLayout from '@/layouts/ContentLayout.astro';
-import { getVisiblePosts } from '@/lib/content';
+import { getVisiblePosts, postPath } from '@/lib/content';
+import { absoluteUrl } from '@/lib/url';
 
 export async function getStaticPaths() {
   const posts = await getVisiblePosts();
@@ -18,7 +19,10 @@ const { Content } = await render(post);
 <ContentLayout
   title={post.data.title}
   description={post.data.description}
+  canonicalUrl={post.data.canonicalUrl ?? absoluteUrl(postPath(post))}
+  cover={post.data.cover ? { image: post.data.cover.image, alt: post.data.cover.alt } : undefined}
   date={post.data.pubDate}
+  updatedDate={post.data.updatedDate}
   tags={post.data.tags}
   type={post.data.draft ? 'Draft Post' : 'Post'}
   discussionLinks={post.data.discussionLinks}

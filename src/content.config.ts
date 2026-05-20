@@ -3,6 +3,10 @@ import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
 
 const language = z.string().default('zh-CN');
+const coverMetadata = z.object({
+  image: z.string(),
+  alt: z.string(),
+});
 
 const postMetadata = z.object({
   title: z.string(),
@@ -13,8 +17,9 @@ const postMetadata = z.object({
   draft: z.boolean().default(false),
   lang: language,
   series: z.string().optional(),
-  cover: z.string().optional(),
+  cover: coverMetadata.optional(),
   canonicalUrl: z.url().optional(),
+  searchText: z.string().optional(),
   discussionLinks: z
     .array(
       z.object({
@@ -31,11 +36,13 @@ const noteMetadata = z.object({
   tags: z.array(z.string()).default([]),
   draft: z.boolean().default(false),
   lang: language,
+  searchText: z.string().optional(),
 });
 
 const pageMetadata = z.object({
   title: z.string(),
   description: z.string().optional(),
+  cover: coverMetadata.optional(),
   draft: z.boolean().default(false),
   lang: language,
 });

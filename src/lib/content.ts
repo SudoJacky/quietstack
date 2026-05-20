@@ -1,4 +1,6 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
+import { encodeSlug, withBase } from './url';
+import { validateContentIntegrity } from './validation';
 
 export type Post = CollectionEntry<'posts'>;
 export type Note = CollectionEntry<'notes'>;
@@ -9,19 +11,33 @@ export type SearchItem = {
   type: 'post' | 'note';
   title: string;
   description?: string;
+  excerpt?: string;
   url: string;
   date: string;
   tags: string[];
-  body: string;
+  searchText?: string;
 };
 
-export const postUrl = (post: Post) => `/posts/${post.id}/`;
-export const noteUrl = (note: Note) => `/notes/${note.id}/`;
-export const pageUrl = (page: Page) => `/${page.id}/`;
-export const tagUrl = (tag: string) => `/tags/${encodeURIComponent(tag)}/`;
-export const seriesUrl = (seriesSlug: string) => `/series/${seriesSlug}/`;
+export const postPath = (post: Post) => `/posts/${post.id}/`;
+export const notePath = (note: Note) => `/notes/${note.id}/`;
+export const pagePath = (page: Page) => `/${page.id}/`;
+export const tagPath = (tag: string) => `/tags/${encodeSlug(tag)}/`;
+export const seriesPath = (seriesSlug: string) => `/series/${seriesSlug}/`;
+
+export const postUrl = (post: Post) => withBase(postPath(post));
+export const noteUrl = (note: Note) => withBase(notePath(note));
+export const pageUrl = (page: Page) => withBase(pagePath(page));
+export const tagUrl = (tag: string) => withBase(tagPath(tag));
+export const seriesUrl = (seriesSlug: string) => withBase(seriesPath(seriesSlug));
+
 export const noteTitle = (note: Note, length = 56) =>
   note.data.title ?? (note.body?.trim().replace(/\s+/g, ' ').slice(0, length) || 'Untitled note');
+
+export const excerptFromBody = (body: string | undefined, length = 160) => {
+  const text = body?.trim().replace(/\s+/g, ' ') ?? '';
+  if (text.length <= length) return text;
+  return `${text.slice(0, length - 3).trim()}...`;
+};
 
 export const formatDate = (date: Date) =>
   new Intl.DateTimeFormat('zh-CN', {
@@ -34,30 +50,37 @@ const byNewest = <T extends { data: { pubDate: Date } }>(a: T, b: T) =>
   b.data.pubDate.valueOf() - a.data.pubDate.valueOf();
 
 export async function getPublicPosts() {
+  await validateContentIntegrity();
   return (await getCollection('posts')).filter((post) => !post.data.draft).sort(byNewest);
 }
 
 export async function getVisiblePosts() {
+  await validateContentIntegrity();
   return (await getCollection('posts')).filter((post) => import.meta.env.DEV || !post.data.draft).sort(byNewest);
 }
 
 export async function getPublicNotes() {
+  await validateContentIntegrity();
   return (await getCollection('notes')).filter((note) => !note.data.draft).sort(byNewest);
 }
 
 export async function getVisibleNotes() {
+  await validateContentIntegrity();
   return (await getCollection('notes')).filter((note) => import.meta.env.DEV || !note.data.draft).sort(byNewest);
 }
 
 export async function getPublicPages() {
+  await validateContentIntegrity();
   return (await getCollection('pages')).filter((page) => !page.data.draft);
 }
 
 export async function getVisiblePages() {
+  await validateContentIntegrity();
   return (await getCollection('pages')).filter((page) => import.meta.env.DEV || !page.data.draft);
 }
 
 export async function getPublicSeries() {
+  await validateContentIntegrity();
   return (await getCollection('series')).filter((item) => !item.data.draft);
 }
 
@@ -81,15 +104,16 @@ export async function getSearchItems(): Promise<SearchItem[]> {
       url: postUrl(post),
       date: post.data.pubDate.toISOString(),
       tags: post.data.tags,
-      body: post.body ?? '',
+      searchText: post.data.searchText,
     })),
     ...notes.map((note) => ({
       type: 'note' as const,
       title: note.data.title ?? formatDate(note.data.pubDate),
+      excerpt: excerptFromBody(note.body),
       url: noteUrl(note),
       date: note.data.pubDate.toISOString(),
       tags: note.data.tags,
-      body: note.body ?? '',
+      searchText: note.data.searchText,
     })),
   ];
 }

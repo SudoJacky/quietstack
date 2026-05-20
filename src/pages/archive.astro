@@ -2,6 +2,8 @@
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import ContentCard from '@/components/ContentCard.astro';
 import { getVisibleNotes, getVisiblePosts, noteTitle, noteUrl, postUrl } from '@/lib/content';
+import { paths } from '@/lib/site';
+import { absoluteUrl } from '@/lib/url';
 
 const items = [
   ...(await getVisiblePosts()).map((post) => ({
@@ -20,7 +22,7 @@ const items = [
 ].sort((a, b) => b.date.valueOf() - a.date.valueOf());
 ---
 
-<BaseLayout title="Archive" description="Posts and Notes in reverse chronological order.">
+<BaseLayout title="Archive" description="Posts and Notes in reverse chronological order." canonicalUrl={absoluteUrl(paths.archive)}>
   <header class="shell listing-header">
     <p class="eyebrow">Chronological index</p>
     <h1>Archive</h1>

@@ -16,17 +16,36 @@ const notes = (await getVisibleNotes()).slice(0, 2);
         <p class="eyebrow">Static personal publishing</p>
         <h1>{site.name}</h1>
         <p>{site.description} Built around Markdown, stable URLs, static feeds, local search, and replaceable visual styles.</p>
+        <div class="hero__actions">
+          <a class="button button--primary" href={routes.posts}>Start reading</a>
+          <a class="button button--secondary" href={routes.archive}>Browse archive</a>
+        </div>
       </div>
       <div class="hero__panel">
-        <strong>Provider-independent output</strong>
-        <span>Build once, host the static artifact anywhere.</span>
+        <div class="code-window" aria-label="Quietstack publishing preview">
+          <div class="code-window__bar">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <pre><code><span class="code-line">content/posts/hello-quietstack.md</span>
+<span class="code-line code-line--accent">title: "Hello Quietstack"</span>
+<span class="code-line">tags: ["astro", "quietstack"]</span>
+<span class="code-line">draft: false</span>
+<span class="code-line">---</span>
+<span class="code-line">Long-lived writing, static output.</span></code></pre>
+          <p>Build once, host the static artifact anywhere.</p>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="section">
+  <section class="section section--soft">
     <div class="shell">
-      <p class="eyebrow">Latest Posts</p>
+      <div class="section__header">
+        <p class="eyebrow">Latest Posts</p>
+        <h2>Long-form writing</h2>
+      </div>
       <div class="content-grid">
         {posts.map((post) => (
           <ContentCard
@@ -38,13 +57,16 @@ const notes = (await getVisibleNotes()).slice(0, 2);
           />
         ))}
       </div>
-      <p><a href={routes.posts}>View all posts</a></p>
+      <p class="section__link"><a href={routes.posts}>View all posts</a></p>
     </div>
   </section>
 
   <section class="section">
     <div class="shell">
-      <p class="eyebrow">Latest Notes</p>
+      <div class="section__header">
+        <p class="eyebrow">Latest Notes</p>
+        <h2>Short-form notes</h2>
+      </div>
       <div class="content-grid">
         {notes.map((note) => (
           <ContentCard
@@ -55,7 +77,19 @@ const notes = (await getVisibleNotes()).slice(0, 2);
           />
         ))}
       </div>
-      <p><a href={routes.notes}>View all notes</a></p>
+      <p class="section__link"><a href={routes.notes}>View all notes</a></p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <div class="cta-band">
+        <div>
+          <p class="eyebrow">Static by default</p>
+          <h2>Keep publishing portable, readable, and calm.</h2>
+        </div>
+        <a class="button button--inverted" href={routes.search}>Search content</a>
+      </div>
     </div>
   </section>
 </BaseLayout>

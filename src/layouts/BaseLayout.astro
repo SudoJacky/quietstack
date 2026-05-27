@@ -62,5 +62,19 @@ const ogType = Astro.props.ogType ?? 'website';
     <main>
       <slot />
     </main>
+    <footer class="site-footer">
+      <div class="shell site-footer__inner">
+        <div>
+          <a class="site-footer__brand" href={routes.home}>{site.name}</a>
+          <p>{site.description}</p>
+        </div>
+        <nav class="site-footer__nav" aria-label="Footer navigation">
+          <a href={routes.posts}>Posts</a>
+          <a href={routes.notes}>Notes</a>
+          <a href={routes.archive}>Archive</a>
+          <a href={routes.search}>Search</a>
+        </nav>
+      </div>
+    </footer>
   </body>
 </html>

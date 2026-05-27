@@ -1,5 +1,7 @@
 ---
 import { routes, site } from '@/lib/site';
+
+const repoUrl = 'https://github.com/SudoJacky/quietstack';
 ---
 
 <header class="site-header">
@@ -11,6 +13,9 @@ import { routes, site } from '@/lib/site';
       <a href={routes.archive}>Archive</a>
       <a href={routes.search}>Search</a>
       <a href={`${routes.home}about/`}>About</a>
+      <a class="site-nav__github" href={repoUrl} target="_blank" rel="noopener noreferrer" aria-label="View Quietstack on GitHub">
+        GitHub
+      </a>
     </nav>
   </div>
 </header>

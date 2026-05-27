@@ -1,6 +1,13 @@
 ---
 import BaseLayout from './BaseLayout.astro';
 import { formatDate, tagUrl } from '@/lib/content';
+import { filterTocHeadings } from '@/lib/toc.js';
+
+type Heading = {
+  depth: number;
+  slug: string;
+  text: string;
+};
 
 type Props = {
   title: string;
@@ -15,9 +22,22 @@ type Props = {
   tags?: string[];
   type: string;
   discussionLinks?: { label: string; url: string }[];
+  headings?: Heading[];
 };
 
-const { title, description, canonicalUrl, cover, date, updatedDate, tags = [], type, discussionLinks = [] } = Astro.props;
+const {
+  title,
+  description,
+  canonicalUrl,
+  cover,
+  date,
+  updatedDate,
+  tags = [],
+  type,
+  discussionLinks = [],
+  headings = [],
+} = Astro.props;
+const tocHeadings = filterTocHeadings(headings) as Heading[];
 ---
 
 <BaseLayout
@@ -30,27 +50,90 @@ const { title, description, canonicalUrl, cover, date, updatedDate, tags = [], t
   modifiedTime={updatedDate}
   tags={tags}
 >
-  <article class="article shell">
-    <header class="article__header">
-      <p class="eyebrow">{type}{date ? ` / ${formatDate(date)}` : ''}</p>
-      <h1>{title}</h1>
-      {description ? <p class="muted">{description}</p> : null}
-      {tags.length ? (
-        <ul class="pill-list" aria-label="Tags">
-          {tags.map((tag) => <li><a class="pill" href={tagUrl(tag)}>{tag}</a></li>)}
-        </ul>
-      ) : null}
-    </header>
-    <div class="article__body">
-      <slot />
-    </div>
-    {discussionLinks.length ? (
-      <footer class="article__footer">
-        <p class="eyebrow">Discuss</p>
-        <ul class="pill-list">
-          {discussionLinks.map((link) => <li><a class="pill" href={link.url}>{link.label}</a></li>)}
-        </ul>
-      </footer>
+  <article class:list={['article shell', tocHeadings.length ? 'article--with-toc' : '']}>
+    {tocHeadings.length ? (
+      <aside class="article-toc" aria-label="Table of contents">
+        <p class="article-toc__title">Contents</p>
+        <nav>
+          <ol>
+            {tocHeadings.map((heading) => (
+              <li class={`article-toc__item article-toc__item--depth-${heading.depth}`}>
+                <a href={`#${heading.slug}`} data-toc-link>{heading.text}</a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      </aside>
     ) : null}
+    <div class="article__main">
+      <header class="article__header">
+        <p class="eyebrow">{type}{date ? ` / ${formatDate(date)}` : ''}</p>
+        <h1>{title}</h1>
+        {description ? <p class="muted">{description}</p> : null}
+        {tags.length ? (
+          <ul class="pill-list" aria-label="Tags">
+            {tags.map((tag) => <li><a class="pill" href={tagUrl(tag)}>{tag}</a></li>)}
+          </ul>
+        ) : null}
+      </header>
+      <div class="article__body" data-pagefind-body>
+        <slot />
+      </div>
+      {discussionLinks.length ? (
+        <footer class="article__footer">
+          <p class="eyebrow">Discuss</p>
+          <ul class="pill-list">
+            {discussionLinks.map((link) => <li><a class="pill" href={link.url}>{link.label}</a></li>)}
+          </ul>
+        </footer>
+      ) : null}
+    </div>
   </article>
 </BaseLayout>
+
+<script>
+  import { getActiveTocSlug } from '@/lib/toc.js';
+
+  const tocLinks = Array.from(document.querySelectorAll('[data-toc-link]'));
+  const tocEntries = tocLinks.flatMap((link) => {
+    const slug = link.getAttribute('href')?.replace(/^#/, '');
+    if (!slug) return [];
+
+    let id = slug;
+    try {
+      id = decodeURIComponent(slug);
+    } catch {
+      id = slug;
+    }
+
+    const heading = document.getElementById(id);
+    return heading ? [{ link, heading, slug: id }] : [];
+  });
+
+  let pendingFrame = 0;
+
+  function updateActiveTocLink() {
+    pendingFrame = 0;
+    const headings = tocEntries.map((entry) => ({
+      slug: entry.slug,
+      top: entry.heading.getBoundingClientRect().top + window.scrollY,
+    }));
+    const activeSlug = getActiveTocSlug(headings, window.scrollY, 96);
+
+    for (const entry of tocEntries) {
+      entry.link.classList.toggle('is-active', entry.slug === activeSlug);
+    }
+  }
+
+  function scheduleActiveTocLinkUpdate() {
+    if (pendingFrame) return;
+    pendingFrame = window.requestAnimationFrame(updateActiveTocLink);
+  }
+
+  if (tocEntries.length) {
+    updateActiveTocLink();
+    window.addEventListener('scroll', scheduleActiveTocLinkUpdate, { passive: true });
+    window.addEventListener('resize', scheduleActiveTocLinkUpdate);
+    window.addEventListener('hashchange', scheduleActiveTocLinkUpdate);
+  }
+</script>

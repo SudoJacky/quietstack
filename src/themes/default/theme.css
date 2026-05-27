@@ -300,6 +300,64 @@
   padding: 6rem 0;
 }
 
+.article--with-toc {
+  display: grid;
+  grid-template-columns: minmax(160px, 220px) minmax(0, 1fr);
+  gap: 0;
+  align-items: start;
+}
+
+.article__main {
+  min-width: 0;
+}
+
+.article--with-toc .article__main {
+  border-left: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  padding-left: 3rem;
+}
+
+.article-toc {
+  position: sticky;
+  top: 6rem;
+  padding-right: 1.5rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.article-toc__title {
+  margin: 0 0 0.75rem;
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.article-toc ol {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.article-toc a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.article-toc a:hover {
+  color: var(--accent);
+}
+
+.article-toc a.is-active {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.article-toc__item--depth-3 {
+  padding-left: 1rem;
+}
+
 .article__header {
   max-width: 760px;
   margin: 0 auto 4rem;
@@ -333,6 +391,7 @@
 
 .article__body h2,
 .article__body h3 {
+  scroll-margin-top: 5.5rem;
   margin-top: 2.5rem;
   color: var(--text-primary);
   font-family: var(--font-display);
@@ -471,6 +530,17 @@
   color: var(--text-muted);
 }
 
+.content-grid > .empty-state {
+  grid-column: 1 / -1;
+}
+
+.search-result__excerpt mark {
+  border-radius: 4px;
+  padding: 0 0.15rem;
+  background: color-mix(in srgb, var(--accent-amber) 45%, transparent);
+  color: var(--text-primary);
+}
+
 .cta-band {
   display: flex;
   align-items: center;
@@ -588,6 +658,24 @@
     align-items: flex-start;
     flex-direction: column;
     padding: 2rem;
+  }
+
+  .article--with-toc {
+    display: block;
+  }
+
+  .article--with-toc .article__main {
+    border-left: 0;
+    padding-left: 0;
+  }
+
+  .article-toc {
+    position: static;
+    max-width: 760px;
+    margin: 0 auto 2rem;
+    padding-right: 0;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
   }
 }
 

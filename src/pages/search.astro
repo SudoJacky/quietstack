@@ -3,22 +3,49 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import { paths } from '@/lib/site';
 import { absoluteUrl, withBase } from '@/lib/url';
 
-const searchIndexUrl = withBase('/search-index.json');
+const pagefindModuleUrl = withBase('/pagefind/pagefind.js');
+const pagefindBundlePath = withBase('/pagefind/');
+const staticSearchIndexUrl = withBase('/search-index.json');
+const preferStaticSearch = import.meta.env.DEV;
 ---
 
 <BaseLayout title="Search" description="Search Posts and Notes." canonicalUrl={absoluteUrl(paths.search)}>
   <header class="shell listing-header">
-    <p class="eyebrow">Static Search Index</p>
+    <p class="eyebrow">Full Text Search</p>
     <h1>Search</h1>
   </header>
   <section class="shell section">
-    <input class="search-box" id="search-input" type="search" placeholder="Search posts and notes" autocomplete="off" />
-    <div id="search-tags" class="filter-row" aria-label="Filter by tag"></div>
+    <input class="search-box" id="search-input" type="search" placeholder="Search posts, notes, and pages" autocomplete="off" />
     <div id="search-results" class="content-grid" style="margin-top: 1rem;"></div>
   </section>
-  <span hidden data-search-index-url={searchIndexUrl}></span>
+  <span
+    hidden
+    data-pagefind-module-url={pagefindModuleUrl}
+    data-pagefind-bundle-path={pagefindBundlePath}
+    data-static-search-index-url={staticSearchIndexUrl}
+    data-prefer-static-search={String(preferStaticSearch)}
+  ></span>
   <script>
-    type SearchItem = {
+    import { renderSearchResult, renderSearchState, searchStaticItems } from '@/lib/pagefind-search.js';
+
+    type PagefindResultData = {
+      url: string;
+      meta: {
+        title?: string;
+      };
+      excerpt: string;
+    };
+
+    type PagefindResult = {
+      data: () => Promise<PagefindResultData>;
+    };
+
+    type PagefindModule = {
+      options: (options: { bundlePath: string; highlightParam: string }) => Promise<void>;
+      search: (query: string) => Promise<{ results: PagefindResult[] }>;
+    };
+
+    type StaticSearchItem = {
       type: string;
       title: string;
       description?: string;
@@ -31,72 +58,106 @@ const searchIndexUrl = withBase('/search-index.json');
 
     const input = document.querySelector('#search-input');
     const results = document.querySelector('#search-results');
-    const tagFilters = document.querySelector('#search-tags');
-    const searchIndexUrl = document.querySelector('[data-search-index-url]')?.getAttribute('data-search-index-url') ?? '/search-index.json';
-    const items = (await fetch(searchIndexUrl).then((response) => response.json())) as SearchItem[];
-    const tags = [...new Set(items.flatMap((item) => item.tags))].sort((a, b) => a.localeCompare(b));
-    let activeTag = '';
+    const pagefindConfig = document.querySelector('[data-pagefind-module-url]');
+    const pagefindModuleUrl = pagefindConfig?.getAttribute('data-pagefind-module-url') ?? '/pagefind/pagefind.js';
+    const pagefindBundlePath = pagefindConfig?.getAttribute('data-pagefind-bundle-path') ?? '/pagefind/';
+    const staticSearchIndexUrl = pagefindConfig?.getAttribute('data-static-search-index-url') ?? '/search-index.json';
+    const preferStaticSearch = pagefindConfig?.getAttribute('data-prefer-static-search') === 'true';
+    let pagefindPromise: Promise<PagefindModule> | undefined;
+    let staticSearchPromise: Promise<StaticSearchItem[]> | undefined;
+    let searchSequence = 0;
 
-    function escapeHtml(value: string | undefined) {
-      return String(value).replace(/[&<>"']/g, (character) => {
-        const entities: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-        return entities[character];
-      });
+    async function loadPagefind() {
+      if (!pagefindPromise) {
+        pagefindPromise = import(/* @vite-ignore */ pagefindModuleUrl).then(async (pagefind) => {
+          await pagefind.options({ bundlePath: pagefindBundlePath, highlightParam: 'highlight' });
+          return pagefind as PagefindModule;
+        });
+      }
+      return pagefindPromise;
     }
 
-    function resultDescription(item: SearchItem) {
-      return item.description ?? item.excerpt ?? '';
+    async function loadStaticSearchItems() {
+      if (!staticSearchPromise) {
+        staticSearchPromise = fetch(staticSearchIndexUrl).then((response) => {
+          if (!response.ok) throw new Error(`Search index request failed: ${response.status}`);
+          return response.json() as Promise<StaticSearchItem[]>;
+        });
+      }
+      return staticSearchPromise;
     }
 
-    function renderTags() {
-      if (!tagFilters) return;
-      tagFilters.innerHTML = [
-        `<button class="pill ${activeTag ? '' : 'is-active'}" type="button" data-tag="" aria-pressed="${activeTag ? 'false' : 'true'}">All</button>`,
-        ...tags.map((tag) => `<button class="pill ${activeTag === tag ? 'is-active' : ''}" type="button" data-tag="${escapeHtml(tag)}" aria-pressed="${activeTag === tag ? 'true' : 'false'}">${escapeHtml(tag)}</button>`),
-      ].join('');
+    async function searchWithStaticIndex(query: string) {
+      const items = await loadStaticSearchItems();
+      return searchStaticItems(items, query, 24);
     }
 
-    function render(query: string) {
-      const normalized = query.trim().toLowerCase();
-      const matches = items
-        .filter((item) => !activeTag || item.tags.includes(activeTag))
-        .filter((item) => {
-          if (!normalized) return true;
-          return [item.title, item.description, item.excerpt, item.searchText, item.tags.join(' ')]
-            .join(' ')
-            .toLowerCase()
-            .includes(normalized);
-        })
-        .slice(0, normalized || activeTag ? 24 : 8);
-
+    async function render(query: string) {
       if (!results) return;
+      const normalized = query.trim();
+      const sequence = ++searchSequence;
 
-      results.innerHTML = matches.length
-        ? matches
-        .map(
-          (item) => `
-            <a class="card" href="${item.url}">
-              <div class="card__meta">${item.type} / ${new Date(item.date).toLocaleDateString('zh-CN')}</div>
-              <h2>${escapeHtml(item.title)}</h2>
-              ${resultDescription(item) ? `<p>${escapeHtml(resultDescription(item))}</p>` : ''}
-            </a>
-          `,
-        )
-        .join('')
-        : `<p class="empty-state">No matching Posts or Notes.</p>`;
+      if (!normalized) {
+        results.innerHTML = renderSearchState('idle');
+        return;
+      }
+
+      results.innerHTML = renderSearchState('loading');
+
+      if (preferStaticSearch) {
+        try {
+          const data = await searchWithStaticIndex(normalized);
+          if (sequence !== searchSequence) return;
+          results.innerHTML = data.length ? data.map(renderSearchResult).join('') : renderSearchState('empty');
+        } catch (fallbackError) {
+          if (sequence !== searchSequence) return;
+          console.error(fallbackError);
+          results.innerHTML = renderSearchState('unavailable');
+        }
+        return;
+      }
+
+      try {
+        const pagefind = await loadPagefind();
+        const search = await pagefind.search(normalized);
+        const data = await Promise.all(search.results.slice(0, 24).map((result) => result.data()));
+
+        if (sequence !== searchSequence) return;
+
+        results.innerHTML = data.length
+          ? data
+            .map((item) =>
+              renderSearchResult({
+                url: item.url,
+                title: item.meta.title ?? item.url,
+                excerpt: item.excerpt,
+              }),
+            )
+            .join('')
+          : renderSearchState('empty');
+      } catch (error) {
+        if (sequence !== searchSequence) return;
+        console.warn('Pagefind search unavailable, falling back to the static search index.', error);
+
+        try {
+          const data = await searchWithStaticIndex(normalized);
+          if (sequence !== searchSequence) return;
+          results.innerHTML = data.length ? data.map(renderSearchResult).join('') : renderSearchState('empty');
+        } catch (fallbackError) {
+          if (sequence !== searchSequence) return;
+          console.error(fallbackError);
+          results.innerHTML = renderSearchState('unavailable');
+        }
+      }
     }
 
     if (input instanceof HTMLInputElement) {
-      input.addEventListener('input', () => render(input.value));
+      input.addEventListener('input', () => {
+        window.clearTimeout(Number(input.dataset.searchTimer ?? 0));
+        input.dataset.searchTimer = String(window.setTimeout(() => render(input.value), 120));
+      });
     }
-    tagFilters?.addEventListener('click', (event) => {
-      const target = event.target;
-      if (!(target instanceof HTMLButtonElement)) return;
-      activeTag = target.dataset.tag ?? '';
-      renderTags();
-      render(input instanceof HTMLInputElement ? input.value : '');
-    });
-    renderTags();
+
     render('');
   </script>
 </BaseLayout>

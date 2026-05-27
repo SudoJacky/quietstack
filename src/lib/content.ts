@@ -18,6 +18,9 @@ export type SearchItem = {
   searchText?: string;
 };
 
+const fencedCodePattern = /```[^\n]*\n([\s\S]*?)```/g;
+const markdownStructuralPattern = /`([^`]+)`|!\[([^\]]*)\]\([^)]+\)|\[([^\]]+)\]\([^)]+\)|[#>*_~`|\\[\]()-]/g;
+
 export const postPath = (post: Post) => `/posts/${post.id}/`;
 export const notePath = (note: Note) => `/notes/${note.id}/`;
 export const pagePath = (page: Page) => `/${page.id}/`;
@@ -38,6 +41,16 @@ export const excerptFromBody = (body: string | undefined, length = 160) => {
   if (text.length <= length) return text;
   return `${text.slice(0, length - 3).trim()}...`;
 };
+
+export const searchTextFromBody = (body: string | undefined) =>
+  body
+    ?.replace(fencedCodePattern, '$1')
+    ?.replace(markdownStructuralPattern, (_match, codeText, imageAlt, linkText) => codeText ?? imageAlt ?? linkText ?? ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const combinedSearchText = (...values: Array<string | undefined>) => values.filter(Boolean).join(' ').trim() || undefined;
 
 export const formatDate = (date: Date) =>
   new Intl.DateTimeFormat('zh-CN', {
@@ -101,10 +114,11 @@ export async function getSearchItems(): Promise<SearchItem[]> {
       type: 'post' as const,
       title: post.data.title,
       description: post.data.description,
+      excerpt: excerptFromBody(post.body),
       url: postUrl(post),
       date: post.data.pubDate.toISOString(),
       tags: post.data.tags,
-      searchText: post.data.searchText,
+      searchText: combinedSearchText(post.data.searchText, searchTextFromBody(post.body)),
     })),
     ...notes.map((note) => ({
       type: 'note' as const,
@@ -113,7 +127,7 @@ export async function getSearchItems(): Promise<SearchItem[]> {
       url: noteUrl(note),
       date: note.data.pubDate.toISOString(),
       tags: note.data.tags,
-      searchText: note.data.searchText,
+      searchText: combinedSearchText(note.data.searchText, searchTextFromBody(note.body)),
     })),
   ];
 }

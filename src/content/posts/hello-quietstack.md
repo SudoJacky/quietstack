@@ -14,7 +14,10 @@ discussionLinks:
 
 Quietstack keeps writing in the repository and publishes it as static pages.
 
+## Repository-first publishing
+
 The first version separates content from visual style so the site can be redesigned without moving posts, notes, pages, feeds, or search.
 
-![A quiet desk setup](./quiet-desk.svg)
+### Static output
 
+![A quiet desk setup](./quiet-desk.svg)

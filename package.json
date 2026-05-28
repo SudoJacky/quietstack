@@ -6,6 +6,10 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build && pagefind --site dist",
+    "build:watch": "node scripts/watch-pagefind.mjs",
+    "publish-api": "node scripts/publish-api.mjs",
+    "preview:watch": "node scripts/watch-pagefind.mjs --preview",
+    "serve:publish": "node scripts/serve-publish.mjs",
     "preview": "astro preview",
     "check": "astro check"
   },

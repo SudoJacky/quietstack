@@ -20,6 +20,16 @@ const postMetadata = z.object({
   cover: coverMetadata.optional(),
   canonicalUrl: z.url().optional(),
   searchText: z.string().optional(),
+  references: z
+    .array(
+      z.object({
+        id: z.string(),
+        source: z.string(),
+        title: z.string().optional(),
+        pdf: z.string().optional(),
+      }),
+    )
+    .default([]),
   discussionLinks: z
     .array(
       z.object({
@@ -53,6 +63,13 @@ const seriesMetadata = z.object({
   draft: z.boolean().default(false),
 });
 
+const sourceMetadata = z.object({
+  title: z.string(),
+  description: z.string().optional(),
+  pdf: z.string().optional(),
+  draft: z.boolean().default(false),
+});
+
 const posts = defineCollection({
   loader: glob({ base: './src/content/posts', pattern: '**/*.{md,mdx}' }),
   schema: postMetadata,
@@ -73,4 +90,9 @@ const series = defineCollection({
   schema: seriesMetadata,
 });
 
-export const collections = { posts, notes, pages, series };
+const sources = defineCollection({
+  loader: glob({ base: './src/content/sources', pattern: '**/*.{md,mdx}' }),
+  schema: sourceMetadata,
+});
+
+export const collections = { posts, notes, pages, series, sources };

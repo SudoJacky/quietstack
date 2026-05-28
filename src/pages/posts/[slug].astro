@@ -1,7 +1,7 @@
 ---
 import { render } from 'astro:content';
 import ContentLayout from '@/layouts/ContentLayout.astro';
-import { getVisiblePosts, postPath } from '@/lib/content';
+import { getVisiblePosts, getVisibleSources, postPath } from '@/lib/content';
 import { absoluteUrl } from '@/lib/url';
 
 export async function getStaticPaths() {
@@ -14,6 +14,21 @@ export async function getStaticPaths() {
 
 const { post } = Astro.props;
 const { Content, headings } = await render(post);
+const sourcesById = new Map((await getVisibleSources()).map((source) => [source.id, source]));
+const sourceReferences = post.data.references.flatMap((reference) => {
+  const source = sourcesById.get(reference.source);
+  if (!source) return [];
+
+  return [
+    {
+      id: reference.id,
+      title: reference.title ?? source.data.title,
+      path: source.id,
+      body: source.body ?? '',
+      pdf: reference.pdf ?? source.data.pdf,
+    },
+  ];
+});
 ---
 
 <ContentLayout
@@ -27,6 +42,7 @@ const { Content, headings } = await render(post);
   type={post.data.draft ? 'Draft Post' : 'Post'}
   discussionLinks={post.data.discussionLinks}
   headings={headings}
+  sourceReferences={sourceReferences}
 >
   <Content />
 </ContentLayout>

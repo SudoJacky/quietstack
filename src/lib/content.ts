@@ -6,6 +6,7 @@ export type Post = CollectionEntry<'posts'>;
 export type Note = CollectionEntry<'notes'>;
 export type Page = CollectionEntry<'pages'>;
 export type Series = CollectionEntry<'series'>;
+export type Source = CollectionEntry<'sources'>;
 
 export type SearchItem = {
   type: 'post' | 'note';
@@ -95,6 +96,11 @@ export async function getVisiblePages() {
 export async function getPublicSeries() {
   await validateContentIntegrity();
   return (await getCollection('series')).filter((item) => !item.data.draft);
+}
+
+export async function getVisibleSources() {
+  await validateContentIntegrity();
+  return (await getCollection('sources')).filter((source) => import.meta.env.DEV || !source.data.draft);
 }
 
 export async function getAllTags() {

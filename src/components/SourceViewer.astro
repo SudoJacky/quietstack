@@ -1,0 +1,35 @@
+---
+type SourceReference = {
+  id: string;
+  title: string;
+  path: string;
+  body: string;
+  pdf?: string;
+};
+
+type Props = {
+  sources: SourceReference[];
+};
+
+const { sources } = Astro.props;
+const sourceJson = JSON.stringify(sources).replaceAll('<', '\\u003c');
+---
+
+{sources.length ? (
+  <aside class="source-viewer" data-source-viewer hidden aria-hidden="true" aria-label="Source viewer">
+    <div class="source-viewer__header">
+      <div>
+        <p class="eyebrow">Source</p>
+        <h2 data-source-viewer-title>Source</h2>
+        <p class="source-viewer__meta" data-source-viewer-meta></p>
+      </div>
+      <div class="source-viewer__actions">
+        <a class="button button--secondary" data-source-viewer-pdf hidden>Open PDF</a>
+        <button class="button button--secondary" type="button" data-source-viewer-close>Close</button>
+      </div>
+    </div>
+    <p class="empty-state" data-source-viewer-empty>Select a source citation in the article.</p>
+    <div class="source-viewer__content" data-source-viewer-content></div>
+  </aside>
+  <script is:inline type="application/json" data-source-viewer-data set:html={sourceJson}></script>
+) : null}

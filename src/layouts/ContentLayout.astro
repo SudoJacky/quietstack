@@ -2,6 +2,7 @@
 import BaseLayout from './BaseLayout.astro';
 import { formatDate, tagUrl } from '@/lib/content';
 import { filterTocHeadings } from '@/lib/toc.js';
+import SourceViewer from '@/components/SourceViewer.astro';
 
 type Heading = {
   depth: number;
@@ -23,6 +24,13 @@ type Props = {
   type: string;
   discussionLinks?: { label: string; url: string }[];
   headings?: Heading[];
+  sourceReferences?: {
+    id: string;
+    title: string;
+    path: string;
+    body: string;
+    pdf?: string;
+  }[];
 };
 
 const {
@@ -36,6 +44,7 @@ const {
   type,
   discussionLinks = [],
   headings = [],
+  sourceReferences = [],
 } = Astro.props;
 const tocHeadings = filterTocHeadings(headings) as Heading[];
 ---
@@ -79,6 +88,7 @@ const tocHeadings = filterTocHeadings(headings) as Heading[];
       <div class="article__body" data-pagefind-body>
         <slot />
       </div>
+      <SourceViewer sources={sourceReferences} />
       {discussionLinks.length ? (
         <footer class="article__footer">
           <p class="eyebrow">Discuss</p>
@@ -93,6 +103,7 @@ const tocHeadings = filterTocHeadings(headings) as Heading[];
 
 <script>
   import { getActiveTocSlug } from '@/lib/toc.js';
+  import { initSourceViewer } from '@/lib/source-viewer.js';
 
   const tocLinks = Array.from(document.querySelectorAll('[data-toc-link]'));
   const tocEntries = tocLinks.flatMap((link) => {
@@ -136,4 +147,6 @@ const tocHeadings = filterTocHeadings(headings) as Heading[];
     window.addEventListener('resize', scheduleActiveTocLinkUpdate);
     window.addEventListener('hashchange', scheduleActiveTocLinkUpdate);
   }
+
+  initSourceViewer();
 </script>

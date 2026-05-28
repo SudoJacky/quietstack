@@ -21,25 +21,35 @@ export async function validateContentIntegrity() {
 }
 
 async function runValidation() {
-  const [posts, notes, pages, series] = await Promise.all([
+  const [posts, notes, pages, series, sources] = await Promise.all([
     getCollection('posts'),
     getCollection('notes'),
     getCollection('pages'),
     getCollection('series'),
+    getCollection('sources'),
   ]);
 
   const errors: string[] = [];
   const seriesById = new Map(series.map((item) => [item.id, item]));
+  const sourcesById = new Map(sources.map((item) => [item.id, item]));
 
   for (const post of posts) {
-    if (!post.data.series) continue;
-    const referencedSeries = seriesById.get(post.data.series);
-    if (!referencedSeries) {
-      errors.push(`Post "${post.id}" references missing Series "${post.data.series}".`);
-      continue;
+    if (post.data.series) {
+      const referencedSeries = seriesById.get(post.data.series);
+      if (!referencedSeries) {
+        errors.push(`Post "${post.id}" references missing Series "${post.data.series}".`);
+      } else if (!post.data.draft && referencedSeries.data.draft) {
+        errors.push(`Public Post "${post.id}" references draft Series "${post.data.series}".`);
+      }
     }
-    if (!post.data.draft && referencedSeries.data.draft) {
-      errors.push(`Public Post "${post.id}" references draft Series "${post.data.series}".`);
+
+    for (const reference of post.data.references) {
+      const source = sourcesById.get(reference.source);
+      if (!source) {
+        errors.push(`Post "${post.id}" references missing Source "${reference.source}".`);
+      } else if (!post.data.draft && source.data.draft) {
+        errors.push(`Public Post "${post.id}" references draft Source "${reference.source}".`);
+      }
     }
   }
 

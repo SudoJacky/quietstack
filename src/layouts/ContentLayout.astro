@@ -59,10 +59,14 @@ const tocHeadings = filterTocHeadings(headings) as Heading[];
   modifiedTime={updatedDate}
   tags={tags}
 >
+  <div class="reading-progress" aria-hidden="true">
+    <span data-reading-progress></span>
+  </div>
   <article class:list={['article shell', tocHeadings.length ? 'article--with-toc' : '']}>
     {tocHeadings.length ? (
       <aside class="article-toc" aria-label="Table of contents">
         <p class="article-toc__title">Contents</p>
+        <span class="article-toc__indicator" data-toc-indicator hidden></span>
         <nav>
           <ol>
             {tocHeadings.map((heading) => (
@@ -102,9 +106,12 @@ const tocHeadings = filterTocHeadings(headings) as Heading[];
 </BaseLayout>
 
 <script>
+  import { readingProgressRatio, tocIndicatorStyle } from '@/lib/article-motion.js';
   import { getActiveTocSlug } from '@/lib/toc.js';
   import { initSourceViewer } from '@/lib/source-viewer.js';
 
+  const progress = document.querySelector('[data-reading-progress]');
+  const tocIndicator = document.querySelector('[data-toc-indicator]');
   const tocLinks = Array.from(document.querySelectorAll('[data-toc-link]'));
   const tocEntries = tocLinks.flatMap((link) => {
     const slug = link.getAttribute('href')?.replace(/^#/, '');
@@ -123,6 +130,17 @@ const tocHeadings = filterTocHeadings(headings) as Heading[];
 
   let pendingFrame = 0;
 
+  function updateReadingProgress() {
+    if (!(progress instanceof HTMLElement)) return;
+
+    const ratio = readingProgressRatio({
+      scrollY: window.scrollY,
+      viewportHeight: window.innerHeight,
+      documentHeight: document.documentElement.scrollHeight,
+    });
+    progress.style.transform = `scaleX(${ratio})`;
+  }
+
   function updateActiveTocLink() {
     pendingFrame = 0;
     const headings = tocEntries.map((entry) => ({
@@ -134,19 +152,40 @@ const tocHeadings = filterTocHeadings(headings) as Heading[];
     for (const entry of tocEntries) {
       entry.link.classList.toggle('is-active', entry.slug === activeSlug);
     }
+
+    const activeEntry = tocEntries.find((entry) => entry.slug === activeSlug);
+    if (tocIndicator instanceof HTMLElement && activeEntry?.link instanceof HTMLElement) {
+      const style = tocIndicatorStyle({
+        linkTop: activeEntry.link.offsetTop,
+        containerTop: 0,
+        linkHeight: activeEntry.link.offsetHeight,
+      });
+      tocIndicator.style.setProperty('--toc-indicator-top', style.top);
+      tocIndicator.style.setProperty('--toc-indicator-height', style.height);
+      tocIndicator.hidden = false;
+    }
   }
 
-  function scheduleActiveTocLinkUpdate() {
-    if (pendingFrame) return;
-    pendingFrame = window.requestAnimationFrame(updateActiveTocLink);
+  function updateArticleMotion() {
+    updateReadingProgress();
+    if (tocEntries.length) updateActiveTocLink();
+    pendingFrame = 0;
   }
+
+  function scheduleArticleMotionUpdate() {
+    if (pendingFrame) return;
+    pendingFrame = window.requestAnimationFrame(updateArticleMotion);
+  }
+
+  updateReadingProgress();
 
   if (tocEntries.length) {
     updateActiveTocLink();
-    window.addEventListener('scroll', scheduleActiveTocLinkUpdate, { passive: true });
-    window.addEventListener('resize', scheduleActiveTocLinkUpdate);
-    window.addEventListener('hashchange', scheduleActiveTocLinkUpdate);
   }
+
+  window.addEventListener('scroll', scheduleArticleMotionUpdate, { passive: true });
+  window.addEventListener('resize', scheduleArticleMotionUpdate);
+  window.addEventListener('hashchange', scheduleArticleMotionUpdate);
 
   initSourceViewer();
 </script>

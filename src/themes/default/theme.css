@@ -55,6 +55,16 @@
   }
 }
 
+@keyframes quiet-source-sweep {
+  0% {
+    background-position: 140% 0;
+  }
+
+  100% {
+    background-position: -40% 0;
+  }
+}
+
 .hero__grid,
 .listing-header,
 .section,
@@ -482,6 +492,25 @@
   font-size: 0.75rem;
 }
 
+.reading-progress {
+  position: sticky;
+  top: 4rem;
+  z-index: 19;
+  height: 2px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.reading-progress span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-teal));
+  box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 24%, transparent);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--motion-fast) linear;
+}
+
 .article {
   padding: 6rem 0;
 }
@@ -508,6 +537,20 @@
   padding-right: 1.5rem;
   color: var(--text-muted);
   font-size: 0.875rem;
+}
+
+.article-toc__indicator {
+  position: absolute;
+  left: 0;
+  width: 3px;
+  height: var(--toc-indicator-height, 1.5rem);
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--accent), var(--accent-teal));
+  box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 26%, transparent);
+  transform: translateY(var(--toc-indicator-top, 0));
+  transition:
+    height var(--motion-base) var(--ease-emphasized),
+    transform var(--motion-base) var(--ease-emphasized);
 }
 
 .article-toc__title {
@@ -543,7 +586,7 @@
 }
 
 .article-toc a.is-active {
-  border-left-color: var(--accent);
+  border-left-color: transparent;
   border-radius: 0 6px 6px 0;
   background: color-mix(in srgb, var(--accent) 12%, transparent);
   color: var(--text-primary);
@@ -586,8 +629,24 @@
 }
 
 .article__body a[href^="source:"] {
+  border-radius: 4px;
   border-bottom: 1px dotted currentColor;
+  background-image: linear-gradient(
+    100deg,
+    transparent 0%,
+    transparent 36%,
+    color-mix(in srgb, var(--accent-amber) 42%, transparent) 48%,
+    color-mix(in srgb, var(--accent-teal) 24%, transparent) 56%,
+    transparent 68%,
+    transparent 100%
+  );
+  background-size: 220% 100%;
+  background-position: 140% 0;
   text-decoration: none;
+}
+
+.article__body a[href^="source:"].is-source-activated {
+  animation: quiet-source-sweep 520ms var(--ease-emphasized);
 }
 
 .article__body h2,
@@ -1110,5 +1169,14 @@
   .hero__panel,
   .source-viewer {
     transform: none !important;
+  }
+
+  .reading-progress span,
+  .article-toc__indicator {
+    transition: none;
+  }
+
+  .article__body a[href^="source:"].is-source-activated {
+    animation: none;
   }
 }

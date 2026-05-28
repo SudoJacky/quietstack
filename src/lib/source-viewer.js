@@ -1,3 +1,37 @@
+function parseLines(value) {
+  const [start, end = start] = String(value ?? '').split('-').map((line) => Number.parseInt(line, 10));
+  if (Number.isInteger(start) && Number.isInteger(end) && start > 0 && end >= start) {
+    return { start, end };
+  }
+
+  return undefined;
+}
+
+export function sourceHashFromLocator(locator) {
+  const params = new URLSearchParams({ source: locator.id });
+
+  if (locator.heading) params.set('heading', locator.heading);
+  if (locator.lines) params.set('lines', `${locator.lines.start}-${locator.lines.end}`);
+
+  return `#${params.toString().replaceAll('+', '%20')}`;
+}
+
+export function parseSourceHash(hash) {
+  const value = String(hash ?? '').replace(/^#/, '');
+  const params = new URLSearchParams(value);
+  const id = params.get('source');
+  if (!id) return undefined;
+
+  const locator = { id };
+  const heading = params.get('heading');
+  const lines = parseLines(params.get('lines'));
+
+  if (heading) locator.heading = heading;
+  if (lines) locator.lines = lines;
+
+  return locator;
+}
+
 export function parseSourceHref(href) {
   if (!href?.startsWith('source:')) return undefined;
 
@@ -12,12 +46,7 @@ export function parseSourceHref(href) {
 
   if (heading) locator.heading = heading;
 
-  if (lines) {
-    const [start, end = start] = lines.split('-').map((line) => Number.parseInt(line, 10));
-    if (Number.isInteger(start) && Number.isInteger(end) && start > 0 && end >= start) {
-      locator.lines = { start, end };
-    }
-  }
+  if (lines) locator.lines = parseLines(lines);
 
   return locator;
 }
@@ -98,8 +127,10 @@ export function initSourceViewer(root = document) {
   const content = viewer.querySelector('[data-source-viewer-content]');
   const empty = viewer.querySelector('[data-source-viewer-empty]');
   const pdfLink = viewer.querySelector('[data-source-viewer-pdf]');
+  const copyButton = viewer.querySelector('[data-source-viewer-copy]');
   const closeButton = viewer.querySelector('[data-source-viewer-close]');
   const sources = new Map(JSON.parse(sourceData.textContent || '[]').map((source) => [source.id, source]));
+  let currentSourceHash;
 
   function showViewer() {
     viewer.hidden = false;
@@ -110,6 +141,11 @@ export function initSourceViewer(root = document) {
   function closeViewer() {
     viewer.classList.remove('is-open');
     viewer.setAttribute('aria-hidden', 'true');
+    currentSourceHash = undefined;
+
+    if (window.location.hash.startsWith('#source=')) {
+      window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+    }
   }
 
   function openSource(locator) {
@@ -120,6 +156,7 @@ export function initSourceViewer(root = document) {
     meta.textContent = source.path ? `${source.id} / ${source.path}` : source.id;
     content.innerHTML = renderSourceLines(source, locator);
     empty.hidden = true;
+    currentSourceHash = sourceHashFromLocator(locator);
     showViewer();
 
     if (source.pdf) {
@@ -144,6 +181,25 @@ export function initSourceViewer(root = document) {
 
   closeButton?.addEventListener('click', closeViewer);
 
+  copyButton?.addEventListener('click', async () => {
+    if (!currentSourceHash) return;
+
+    const url = `${window.location.origin}${window.location.pathname}${window.location.search}${currentSourceHash}`;
+    await navigator.clipboard?.writeText(url);
+    copyButton.textContent = 'Copied';
+    window.setTimeout(() => {
+      copyButton.textContent = 'Copy link';
+    }, 1500);
+  });
+
+  const initialLocator = parseSourceHash(window.location.hash);
+  if (initialLocator) openSource(initialLocator);
+
+  window.addEventListener('hashchange', () => {
+    const locator = parseSourceHash(window.location.hash);
+    if (locator) openSource(locator);
+  });
+
   root.addEventListener('click', (event) => {
     const link = event.target instanceof Element ? event.target.closest('a[href^="source:"]') : undefined;
     if (!link) return;
@@ -153,5 +209,6 @@ export function initSourceViewer(root = document) {
 
     event.preventDefault();
     openSource(locator);
+    window.history.replaceState(null, '', sourceHashFromLocator(locator));
   });
 }

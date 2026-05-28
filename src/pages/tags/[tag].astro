@@ -20,12 +20,14 @@ const items = [
     description: post.data.description,
     date: post.data.pubDate,
     type: 'Post',
+    tags: post.data.tags,
   })),
   ...notes.map((note) => ({
     href: noteUrl(note),
     title: noteTitle(note),
     date: note.data.pubDate,
     type: 'Note',
+    tags: note.data.tags,
   })),
 ].sort((a, b) => b.date.valueOf() - a.date.valueOf());
 ---

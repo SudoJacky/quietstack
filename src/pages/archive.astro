@@ -1,35 +1,125 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import ContentCard from '@/components/ContentCard.astro';
+import { collectArchiveTags, groupArchiveItemsByYear } from '@/lib/archive-discovery';
 import { getVisibleNotes, getVisiblePosts, noteTitle, noteUrl, postUrl } from '@/lib/content';
 import { paths } from '@/lib/site';
 import { absoluteUrl } from '@/lib/url';
 
-const items = [
+type ArchiveItem = {
+  href: string;
+  title: string;
+  description?: string;
+  date: Date;
+  type: 'Post' | 'Note';
+  tags: string[];
+};
+
+const items: ArchiveItem[] = [
   ...(await getVisiblePosts()).map((post) => ({
     href: postUrl(post),
     title: post.data.title,
     description: post.data.description,
     date: post.data.pubDate,
-    type: 'Post',
+    type: 'Post' as const,
+    tags: post.data.tags,
   })),
   ...(await getVisibleNotes()).map((note) => ({
     href: noteUrl(note),
     title: noteTitle(note),
     date: note.data.pubDate,
-    type: 'Note',
+    type: 'Note' as const,
+    tags: note.data.tags,
   })),
 ].sort((a, b) => b.date.valueOf() - a.date.valueOf());
+const groups = groupArchiveItemsByYear(items);
+const tags = collectArchiveTags(items);
 ---
 
 <BaseLayout title="Archive" description="Posts and Notes in reverse chronological order." canonicalUrl={absoluteUrl(paths.archive)}>
   <header class="shell listing-header">
     <p class="eyebrow">Chronological index</p>
     <h1>Archive</h1>
-  </header>
-  <section class="shell section">
-    <div class="content-grid">
-      {items.map((item) => <ContentCard {...item} />)}
+    <div class="archive-controls" aria-label="Archive filters">
+      <label>
+        <span>Type</span>
+        <select data-archive-type>
+          <option value="all">All</option>
+          <option value="post">Posts</option>
+          <option value="note">Notes</option>
+        </select>
+      </label>
+      <label>
+        <span>Tag</span>
+        <select data-archive-tag>
+          <option value="all">All tags</option>
+          {tags.map((tag) => <option value={tag.normalize('NFKC').trim().toLocaleLowerCase()}>{tag}</option>)}
+        </select>
+      </label>
     </div>
+  </header>
+  <section class="shell section archive-list" data-archive-list>
+    {groups.map((group) => (
+      <section class="archive-year" data-archive-year>
+        <div class="archive-year__header">
+          <h2>{group.year}</h2>
+          <span data-archive-year-count>{group.items.length}</span>
+        </div>
+        <div class="content-grid">
+          {group.items.map((item: ArchiveItem) => <ContentCard {...item} />)}
+        </div>
+      </section>
+    ))}
+    <p class="empty-state" data-archive-empty hidden>No matching entries.</p>
   </section>
+  <script>
+    const typeFilter = document.querySelector('[data-archive-type]');
+    const tagFilter = document.querySelector('[data-archive-tag]');
+    const groups = Array.from(document.querySelectorAll('[data-archive-year]'));
+    const empty = document.querySelector('[data-archive-empty]');
+
+    function selectedValue(control: Element | null) {
+      return control instanceof HTMLSelectElement ? control.value : 'all';
+    }
+
+    function matches(card: HTMLElement, type: string, tag: string) {
+      const cardType = card.getAttribute('data-content-type') ?? '';
+      const cardTags = (card.getAttribute('data-content-tags') ?? '').split('|').filter(Boolean);
+      const typeMatches = type === 'all' || cardType === type;
+      const tagMatches = tag === 'all' || cardTags.includes(tag);
+
+      return typeMatches && tagMatches;
+    }
+
+    function applyArchiveFilters() {
+      const type = selectedValue(typeFilter);
+      const tag = selectedValue(tagFilter);
+      let total = 0;
+
+      for (const group of groups) {
+        if (!(group instanceof HTMLElement)) continue;
+
+        const cards = Array.from(group.querySelectorAll('[data-archive-card]')).filter(
+          (card): card is HTMLElement => card instanceof HTMLElement,
+        );
+        let visibleCount = 0;
+
+        for (const card of cards) {
+          const visible = matches(card, type, tag);
+          card.hidden = !visible;
+          if (visible) visibleCount += 1;
+        }
+
+        const count = group.querySelector('[data-archive-year-count]');
+        if (count) count.textContent = String(visibleCount);
+        group.hidden = visibleCount === 0;
+        total += visibleCount;
+      }
+
+      if (empty instanceof HTMLElement) empty.hidden = total !== 0;
+    }
+
+    typeFilter?.addEventListener('change', applyArchiveFilters);
+    tagFilter?.addEventListener('change', applyArchiveFilters);
+  </script>
 </BaseLayout>

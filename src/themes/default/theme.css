@@ -296,6 +296,23 @@
   color: var(--text-secondary);
 }
 
+.card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card__tags li {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.2rem 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
 .article {
   padding: 6rem 0;
 }
@@ -598,6 +615,62 @@
   font-size: 3rem;
   font-weight: 400;
   line-height: 1.1;
+}
+
+.archive-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.archive-controls label {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.archive-controls select {
+  min-width: 10rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.7rem 0.85rem;
+  background: var(--surface-solid);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.archive-list {
+  display: grid;
+  gap: 3rem;
+}
+
+.archive-year {
+  display: grid;
+  gap: 1rem;
+}
+
+.archive-year__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.75rem;
+}
+
+.archive-year__header h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.archive-year__header span {
+  color: var(--text-muted);
+  font-size: 0.875rem;
 }
 
 .search-box {

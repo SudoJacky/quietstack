@@ -1,4 +1,6 @@
 ---
+import BrandLogo from '@/components/BrandLogo.astro';
+import GitHubIcon from '@/components/GitHubIcon.astro';
 import { routes, site } from '@/lib/site';
 
 const repoUrl = 'https://github.com/SudoJacky/quietstack';
@@ -6,7 +8,9 @@ const repoUrl = 'https://github.com/SudoJacky/quietstack';
 
 <header class="site-header">
   <div class="shell site-header__inner">
-    <a class="brand" href={routes.home}>{site.name}</a>
+    <a class="brand" href={routes.home} aria-label={`${site.name} home`}>
+      <BrandLogo />
+    </a>
     <nav class="site-nav" aria-label="Primary navigation">
       <a href={routes.posts}>Posts</a>
       <a href={routes.notes}>Notes</a>
@@ -14,7 +18,8 @@ const repoUrl = 'https://github.com/SudoJacky/quietstack';
       <a href={routes.search}>Search</a>
       <a href={`${routes.home}about/`}>About</a>
       <a class="site-nav__github" href={repoUrl} target="_blank" rel="noopener noreferrer" aria-label="View Quietstack on GitHub">
-        GitHub
+        <GitHubIcon />
+        <span>GitHub</span>
       </a>
     </nav>
   </div>

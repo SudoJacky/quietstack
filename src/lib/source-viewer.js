@@ -92,6 +92,16 @@ export function sourceLineScrollTop(container, highlightedLine) {
   return Math.max(0, highlightedLine.offsetTop - container.clientHeight / 2 + highlightedLine.clientHeight / 2);
 }
 
+export function pulseSourceLink(link, { className = 'is-source-activated', setTimeoutFn = globalThis.setTimeout } = {}) {
+  if (!link?.classList) return undefined;
+
+  link.classList.remove(className);
+  void link.offsetWidth;
+  link.classList.add(className);
+
+  return setTimeoutFn(() => link.classList.remove(className), 520);
+}
+
 function escapeHtml(value) {
   return String(value)
     .replaceAll('&', '&amp;')
@@ -208,6 +218,7 @@ export function initSourceViewer(root = document) {
     if (!locator) return;
 
     event.preventDefault();
+    pulseSourceLink(link);
     openSource(locator);
     window.history.replaceState(null, '', sourceHashFromLocator(locator));
   });

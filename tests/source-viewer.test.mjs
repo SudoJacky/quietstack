@@ -5,6 +5,7 @@ import {
   findHighlightLines,
   parseSourceHash,
   parseSourceHref,
+  pulseSourceLink,
   sourceHashFromLocator,
   sourceLineScrollTop,
 } from '../src/lib/source-viewer.js';
@@ -62,4 +63,30 @@ test('findHighlightLines supports heading and line locators', () => {
 test('sourceLineScrollTop centers highlighted lines inside the source panel', () => {
   assert.equal(sourceLineScrollTop({ clientHeight: 400 }, { offsetTop: 600, clientHeight: 24 }), 412);
   assert.equal(sourceLineScrollTop({ clientHeight: 400 }, { offsetTop: 80, clientHeight: 24 }), 0);
+});
+
+test('pulseSourceLink toggles a temporary activation class', () => {
+  const classes = new Set(['is-source-activated']);
+  let cleanup;
+  const link = {
+    offsetWidth: 12,
+    classList: {
+      add: (name) => classes.add(name),
+      remove: (name) => classes.delete(name),
+      contains: (name) => classes.has(name),
+    },
+  };
+
+  const timeoutId = pulseSourceLink(link, {
+    setTimeoutFn: (callback, delay) => {
+      cleanup = callback;
+      assert.equal(delay, 520);
+      return 7;
+    },
+  });
+
+  assert.equal(timeoutId, 7);
+  assert.equal(classes.has('is-source-activated'), true);
+  cleanup();
+  assert.equal(classes.has('is-source-activated'), false);
 });

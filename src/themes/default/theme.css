@@ -24,6 +24,47 @@
   --on-dark-soft: #a09d96;
   --code-bg: #181715;
   --shadow-soft: 0 1px 3px rgba(20, 20, 19, 0.08);
+  --shadow-lift: 0 14px 32px rgba(20, 20, 19, 0.1);
+  --motion-fast: 140ms;
+  --motion-base: 220ms;
+  --motion-slow: 360ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes quiet-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes quiet-soft-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.72;
+  }
+}
+
+.hero__grid,
+.listing-header,
+.section,
+.article__header,
+.article__body {
+  animation: quiet-fade-up var(--motion-slow) var(--ease-emphasized) both;
+}
+
+[hidden] {
+  display: none !important;
 }
 
 .site-header {
@@ -50,6 +91,7 @@
   color: var(--text-primary);
   font-weight: 500;
   text-decoration: none;
+  transition: color var(--motion-fast) var(--ease-standard);
 }
 
 .brand::before {
@@ -58,6 +100,13 @@
   font-family: var(--font-display);
   font-size: 1.1rem;
   line-height: 1;
+  transition:
+    color var(--motion-fast) var(--ease-standard),
+    transform var(--motion-base) var(--ease-emphasized);
+}
+
+.brand:hover::before {
+  transform: rotate(12deg) scale(1.08);
 }
 
 .site-nav {
@@ -72,6 +121,9 @@
 .site-nav a {
   color: inherit;
   text-decoration: none;
+  transition:
+    color var(--motion-fast) var(--ease-standard),
+    opacity var(--motion-fast) var(--ease-standard);
 }
 
 .site-nav a:hover {
@@ -91,11 +143,18 @@
   font-size: 0.875rem;
   font-weight: 500;
   line-height: 1;
+  transition:
+    background-color var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard),
+    transform var(--motion-base) var(--ease-emphasized),
+    box-shadow var(--motion-base) var(--ease-standard);
 }
 
 .site-nav__github:hover {
   background: var(--accent-strong);
   color: var(--on-primary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-soft);
 }
 
 .button {
@@ -110,6 +169,31 @@
   font-weight: 500;
   line-height: 1;
   text-decoration: none;
+  transition:
+    background-color var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-base) var(--ease-standard),
+    transform var(--motion-base) var(--ease-emphasized);
+}
+
+.button:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-soft);
+}
+
+.button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.button:focus-visible,
+.site-nav a:focus-visible,
+.brand:focus-visible,
+.site-footer a:focus-visible,
+.card:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  outline-offset: 3px;
 }
 
 .button--primary {
@@ -187,11 +271,16 @@
   padding: 2rem;
   background: var(--surface-dark);
   color: var(--on-dark);
+  animation: quiet-fade-up var(--motion-slow) var(--ease-emphasized) 90ms both;
+  transition:
+    box-shadow var(--motion-base) var(--ease-standard),
+    transform var(--motion-base) var(--ease-emphasized);
 }
 
 .code-window {
   display: grid;
   gap: 1rem;
+  animation: quiet-fade-up var(--motion-slow) var(--ease-emphasized) 150ms both;
 }
 
 .code-window__bar {
@@ -204,10 +293,19 @@
   height: 0.65rem;
   border-radius: 999px;
   background: var(--surface-dark-elevated);
+  animation: quiet-soft-pulse 2.8s var(--ease-standard) infinite;
 }
 
 .code-window__bar span:first-child {
   background: var(--accent);
+}
+
+.code-window__bar span:nth-child(2) {
+  animation-delay: 160ms;
+}
+
+.code-window__bar span:nth-child(3) {
+  animation-delay: 320ms;
 }
 
 .code-window pre {
@@ -225,6 +323,8 @@
 
 .code-line--accent {
   color: var(--accent-amber);
+  text-shadow: 0 0 18px color-mix(in srgb, var(--accent-amber) 28%, transparent);
+  transition: color var(--motion-base) var(--ease-standard);
 }
 
 .code-window p {
@@ -270,10 +370,18 @@
   background: var(--surface-card);
   color: var(--text-primary);
   text-decoration: none;
+  box-shadow: 0 0 0 rgba(20, 20, 19, 0);
+  transition:
+    border-color var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-base) var(--ease-standard),
+    transform var(--motion-base) var(--ease-emphasized);
 }
 
-.card:hover {
+.card:hover,
+.card:focus-visible {
   border-color: var(--accent);
+  box-shadow: var(--shadow-lift);
+  transform: translateY(-3px);
 }
 
 .card__meta {
@@ -363,6 +471,10 @@
   padding: 0.25rem 0 0.25rem 0.75rem;
   color: inherit;
   text-decoration: none;
+  transition:
+    background-color var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard);
 }
 
 .article-toc a:hover {
@@ -522,8 +634,8 @@
   box-shadow: 0 20px 48px rgba(20, 20, 19, 0.18);
   transform: translateX(calc(100% + 1.5rem));
   transition:
-    transform 420ms cubic-bezier(0.16, 1, 0.3, 1),
-    opacity 240ms ease-out;
+    transform var(--motion-slow) var(--ease-emphasized),
+    opacity var(--motion-base) var(--ease-standard);
   opacity: 0;
 }
 
@@ -640,6 +752,21 @@
   background: var(--surface-solid);
   color: var(--text-primary);
   font: inherit;
+  transition:
+    background-color var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-base) var(--ease-standard),
+    transform var(--motion-base) var(--ease-emphasized);
+}
+
+.archive-controls select:hover {
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
+}
+
+.archive-controls select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+  outline: none;
 }
 
 .archive-list {
@@ -681,12 +808,25 @@
   padding: 0.625rem 0.875rem;
   background: var(--surface-solid);
   color: var(--text-primary);
+  transition:
+    background-color var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-base) var(--ease-standard),
+    transform var(--motion-base) var(--ease-emphasized);
+}
+
+.search-box:hover {
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
 }
 
 .search-box:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
   outline: none;
+}
+
+.search-results {
+  margin-top: 1rem;
 }
 
 .filter-row {
@@ -709,10 +849,15 @@
 .empty-state {
   margin: 0;
   color: var(--text-muted);
+  animation: quiet-fade-up var(--motion-base) var(--ease-emphasized) both;
 }
 
 .content-grid > .empty-state {
   grid-column: 1 / -1;
+}
+
+.search-results .card {
+  animation: quiet-fade-up var(--motion-base) var(--ease-emphasized) both;
 }
 
 .search-result__excerpt mark {
@@ -766,6 +911,7 @@
   color: var(--on-dark);
   font-weight: 500;
   text-decoration: none;
+  transition: color var(--motion-fast) var(--ease-standard);
 }
 
 .site-footer__brand::before {
@@ -773,6 +919,13 @@
   color: var(--accent);
   font-family: var(--font-display);
   font-size: 1.1rem;
+  transition:
+    color var(--motion-fast) var(--ease-standard),
+    transform var(--motion-base) var(--ease-emphasized);
+}
+
+.site-footer__brand:hover::before {
+  transform: rotate(12deg) scale(1.08);
 }
 
 .site-footer p {
@@ -791,6 +944,9 @@
   color: var(--on-dark);
   font-size: 0.875rem;
   text-decoration: none;
+  transition:
+    color var(--motion-fast) var(--ease-standard),
+    opacity var(--motion-fast) var(--ease-standard);
 }
 
 .site-footer__nav a:hover {
@@ -885,5 +1041,28 @@
 @media (min-width: 761px) and (max-width: 1024px) {
   .content-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+
+  .hero__grid,
+  .listing-header,
+  .section,
+  .article__header,
+  .article__body,
+  .button,
+  .card,
+  .hero__panel,
+  .source-viewer {
+    transform: none !important;
   }
 }

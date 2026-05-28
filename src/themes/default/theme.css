@@ -534,15 +534,26 @@
 .article-toc {
   position: sticky;
   top: 6rem;
+  padding-left: 0.9rem;
   padding-right: 1.5rem;
   color: var(--text-muted);
   font-size: 0.875rem;
 }
 
+.article-toc::before {
+  position: absolute;
+  top: 2.25rem;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  background: color-mix(in srgb, var(--border) 72%, transparent);
+  content: "";
+}
+
 .article-toc__indicator {
   position: absolute;
   left: 0;
-  width: 3px;
+  width: 2px;
   height: var(--toc-indicator-height, 1.5rem);
   border-radius: 999px;
   background: linear-gradient(180deg, var(--accent), var(--accent-teal));
@@ -571,13 +582,10 @@
 
 .article-toc a {
   display: block;
-  border-left: 3px solid transparent;
-  padding: 0.25rem 0 0.25rem 0.75rem;
+  padding: 0.25rem 0;
   color: inherit;
   text-decoration: none;
   transition:
-    background-color var(--motion-fast) var(--ease-standard),
-    border-color var(--motion-fast) var(--ease-standard),
     color var(--motion-fast) var(--ease-standard);
 }
 
@@ -586,9 +594,7 @@
 }
 
 .article-toc a.is-active {
-  border-left-color: transparent;
-  border-radius: 0 6px 6px 0;
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  background: transparent;
   color: var(--text-primary);
   font-weight: 700;
 }

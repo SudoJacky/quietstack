@@ -75,6 +75,8 @@ references:
     title: Smith 2024 paper
 ```
 
+Source documents can be uploaded after the post. A missing or draft source does not block the production build; the citation remains a normal link target until the source viewer data is available.
+
 ## Content
 
 - Posts live in `src/content/posts/`

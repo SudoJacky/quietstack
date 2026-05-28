@@ -152,6 +152,8 @@ The key conclusion appears in a specific range. [Source lines](source:smith-2024
 
 Clicking either link opens the source viewer from the right side of the article. The viewer highlights the requested heading or line range and can scroll independently from the article.
 
+Source documents may be uploaded after the post is published. If a referenced source is missing or still marked as draft, the production build continues and the citation remains in the article, but the source viewer has no data for that citation until the source is uploaded and published.
+
 ## PDF attachments
 
 PDFs should be uploaded as attachments, not placed in `src/content/sources/`. The source Markdown belongs in `src/content/sources/`; the original PDF belongs under `public/attachments/...`.
@@ -215,7 +217,7 @@ Posts join a series with `series: building-quietstack`.
 Before publishing, verify:
 
 1. Markdown frontmatter is complete.
-2. `references[].source` points to an existing file in `src/content/sources/`.
+2. `references[].source` points to an existing file in `src/content/sources/` when source viewer data should be available immediately.
 3. `pdf` paths point to existing files under `public/attachments/`.
 4. Internal links are relative unless they intentionally point to static attachments.
 5. `npm run check` and `npm run build` pass.

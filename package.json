@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build && pagefind --site dist",
+    "test": "node --test tests/*.test.mjs",
+    "verify:builds": "node scripts/verify-builds.mjs",
+    "verify": "npm run check && npm test && npm run verify:builds",
     "build:watch": "node scripts/watch-pagefind.mjs",
     "publish-api": "node scripts/publish-api.mjs",
     "preview:watch": "node scripts/watch-pagefind.mjs --preview",

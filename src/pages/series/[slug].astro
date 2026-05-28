@@ -24,7 +24,7 @@ const posts = (await getVisiblePosts()).filter((post) => post.data.series === it
   </header>
   <section class="shell section">
     <div class="content-grid">
-      {posts.map((post) => <ContentCard href={postUrl(post)} title={post.data.title} description={post.data.description} date={post.data.pubDate} type="Post" />)}
+      {posts.map((post) => <ContentCard href={postUrl(post)} title={post.data.title} description={post.data.description} date={post.data.pubDate} type="Post" tags={post.data.tags} />)}
     </div>
   </section>
 </BaseLayout>

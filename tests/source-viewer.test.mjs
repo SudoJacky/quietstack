@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildSourceLines, findHighlightLines, parseSourceHref, sourceLineScrollTop } from '../src/lib/source-viewer.js';
+import {
+  buildSourceLines,
+  findHighlightLines,
+  parseSourceHash,
+  parseSourceHref,
+  sourceHashFromLocator,
+  sourceLineScrollTop,
+} from '../src/lib/source-viewer.js';
 
 test('parseSourceHref reads source id and heading locator', () => {
   assert.deepEqual(parseSourceHref('source:smith-2024#heading=experiments'), {
@@ -14,6 +21,21 @@ test('parseSourceHref reads source id and line locator', () => {
     id: 'smith-2024',
     lines: { start: 12, end: 18 },
   });
+});
+
+test('source hashes preserve source id and locator details', () => {
+  const hash = sourceHashFromLocator({ id: 'smith-2024', heading: 'experiment design' });
+
+  assert.equal(hash, '#source=smith-2024&heading=experiment%20design');
+  assert.deepEqual(parseSourceHash(hash), { id: 'smith-2024', heading: 'experiment design' });
+});
+
+test('parseSourceHash supports line locators and ignores unrelated hashes', () => {
+  assert.deepEqual(parseSourceHash('#source=smith-2024&lines=120-138'), {
+    id: 'smith-2024',
+    lines: { start: 120, end: 138 },
+  });
+  assert.equal(parseSourceHash('#section-heading'), undefined);
 });
 
 test('buildSourceLines creates heading slugs for markdown headings', () => {

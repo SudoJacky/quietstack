@@ -16,3 +16,11 @@ test('theme keeps the article TOC indicator in a separate gutter', async () => {
   assert.match(css, /\.article-toc__indicator\s*\{[^}]*top:\s*0;/s);
   assert.match(css, /\.article-toc a\.is-active\s*\{[^}]*background:\s*transparent;/s);
 });
+
+test('theme lets the posts discovery panel use the shell width', async () => {
+  const css = await readFile(new URL('../src/themes/default/theme.css', import.meta.url), 'utf8');
+  const discoveryPanel = css.match(/\.discovery-panel\s*\{(?<body>[^}]*)\}/s)?.groups?.body ?? '';
+
+  assert.match(discoveryPanel, /width:\s*100%;/);
+  assert.doesNotMatch(discoveryPanel, /max-width:\s*760px;/);
+});

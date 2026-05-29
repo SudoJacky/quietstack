@@ -755,7 +755,7 @@
   grid-template-columns: minmax(16rem, 1fr) minmax(8rem, auto);
   gap: 0.75rem;
   align-items: end;
-  max-width: 760px;
+  width: 100%;
   margin-top: 1.5rem;
 }
 

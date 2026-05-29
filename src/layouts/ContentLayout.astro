@@ -24,6 +24,12 @@ type Props = {
   type: string;
   discussionLinks?: { label: string; url: string }[];
   headings?: Heading[];
+  readingSlug?: string;
+  readingNavigation?: {
+    previous?: ReadingLink;
+    next?: ReadingLink;
+    related?: ReadingLink[];
+  };
   sourceReferences?: {
     id: string;
     title: string;
@@ -31,6 +37,14 @@ type Props = {
     body: string;
     pdf?: string;
   }[];
+};
+
+type ReadingLink = {
+  href: string;
+  title: string;
+  description?: string;
+  date?: string;
+  tags?: string[];
 };
 
 const {
@@ -44,9 +58,12 @@ const {
   type,
   discussionLinks = [],
   headings = [],
+  readingSlug,
+  readingNavigation,
   sourceReferences = [],
 } = Astro.props;
 const tocHeadings = filterTocHeadings(headings) as Heading[];
+const hasReadingNavigation = Boolean(readingNavigation?.previous || readingNavigation?.next || readingNavigation?.related?.length);
 ---
 
 <BaseLayout
@@ -62,7 +79,7 @@ const tocHeadings = filterTocHeadings(headings) as Heading[];
   <div class="reading-progress" aria-hidden="true">
     <span data-reading-progress></span>
   </div>
-  <article class:list={['article shell', tocHeadings.length ? 'article--with-toc' : '']}>
+  <article class:list={['article shell', tocHeadings.length ? 'article--with-toc' : '']} data-article-reading-slug={readingSlug}>
     {tocHeadings.length ? (
       <aside class="article-toc" aria-label="Table of contents">
         <p class="article-toc__title">Contents</p>
@@ -93,6 +110,40 @@ const tocHeadings = filterTocHeadings(headings) as Heading[];
         <slot />
       </div>
       <SourceViewer sources={sourceReferences} />
+      {hasReadingNavigation ? (
+        <nav class="reading-navigation" aria-label="Continue reading">
+          {(readingNavigation?.previous || readingNavigation?.next) ? (
+            <div class="reading-navigation__adjacent">
+              {readingNavigation?.previous ? (
+                <a class="reading-navigation__link" href={readingNavigation.previous.href}>
+                  <span>Previous</span>
+                  <strong>{readingNavigation.previous.title}</strong>
+                </a>
+              ) : <span></span>}
+              {readingNavigation?.next ? (
+                <a class="reading-navigation__link reading-navigation__link--next" href={readingNavigation.next.href}>
+                  <span>Next</span>
+                  <strong>{readingNavigation.next.title}</strong>
+                </a>
+              ) : <span></span>}
+            </div>
+          ) : null}
+          {readingNavigation?.related?.length ? (
+            <div class="reading-navigation__related">
+              <p class="eyebrow">Related</p>
+              <div class="reading-navigation__grid">
+                {readingNavigation.related.map((item) => (
+                  <a class="reading-navigation__card" href={item.href}>
+                    <span>{item.tags?.slice(0, 2).join(' / ')}</span>
+                    <strong>{item.title}</strong>
+                    {item.description ? <p>{item.description}</p> : null}
+                  </a>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </nav>
+      ) : null}
       {discussionLinks.length ? (
         <footer class="article__footer">
           <p class="eyebrow">Discuss</p>
@@ -107,10 +158,13 @@ const tocHeadings = filterTocHeadings(headings) as Heading[];
 
 <script>
   import { readingProgressRatio, tocIndicatorStyle } from '@/lib/article-motion.js';
+  import { readReadingState, updateReadingEntry, writeReadingState } from '@/lib/reading-state.js';
   import { getActiveTocSlug } from '@/lib/toc.js';
   import { initSourceViewer } from '@/lib/source-viewer.js';
 
   const progress = document.querySelector('[data-reading-progress]');
+  const article = document.querySelector('[data-article-reading-slug]');
+  const readingSlug = article?.getAttribute('data-article-reading-slug') ?? '';
   const tocIndicator = document.querySelector('[data-toc-indicator]');
   const tocLinks = Array.from(document.querySelectorAll('[data-toc-link]'));
   const tocEntries = tocLinks.flatMap((link) => {
@@ -129,6 +183,16 @@ const tocHeadings = filterTocHeadings(headings) as Heading[];
   });
 
   let pendingFrame = 0;
+  let lastStoredReadingRatio = -1;
+
+  function updateStoredReadingState(ratio: number) {
+    if (!readingSlug) return;
+    if (Math.abs(ratio - lastStoredReadingRatio) < 0.04 && ratio < 0.85) return;
+
+    const state = readReadingState();
+    writeReadingState(updateReadingEntry(state, readingSlug, ratio));
+    lastStoredReadingRatio = ratio;
+  }
 
   function updateReadingProgress() {
     if (!(progress instanceof HTMLElement)) return;
@@ -139,6 +203,7 @@ const tocHeadings = filterTocHeadings(headings) as Heading[];
       documentHeight: document.documentElement.scrollHeight,
     });
     progress.style.transform = `scaleX(${ratio})`;
+    updateStoredReadingState(ratio);
   }
 
   function updateActiveTocLink() {

@@ -6,18 +6,129 @@ import { paths } from '@/lib/site';
 import { absoluteUrl } from '@/lib/url';
 
 const posts = await getVisiblePosts();
+const tags = [...new Set(posts.flatMap((post) => post.data.tags))].sort((a, b) => a.localeCompare(b));
+const years = [...new Set(posts.map((post) => String(post.data.pubDate.getFullYear())))].sort((a, b) => b.localeCompare(a));
 ---
 
 <BaseLayout title="Posts" description="Long-form writing from Quietstack." canonicalUrl={absoluteUrl(paths.posts)}>
   <header class="shell listing-header">
     <p class="eyebrow">Main publishing flow</p>
     <h1>Posts</h1>
+    <div class="discovery-panel" aria-label="Post filters">
+      <label class="discovery-search">
+        <span>Filter posts</span>
+        <input data-post-query type="search" placeholder="Search title, summary, tag, or year" autocomplete="off" />
+      </label>
+      <label class="discovery-year">
+        <span>Year</span>
+        <select data-post-year data-styled-select>
+          <option value="all">All years</option>
+          {years.map((year) => <option value={year}>{year}</option>)}
+        </select>
+      </label>
+      <div class="discovery-tags" aria-label="Post tags">
+        <button class="pill is-active" type="button" data-post-tag value="all">All</button>
+        {tags.map((tag) => <button class="pill" type="button" data-post-tag value={tag.normalize('NFKC').trim().toLocaleLowerCase()}>{tag}</button>)}
+      </div>
+      <p class="discovery-count" data-post-count>{posts.length} posts</p>
+    </div>
   </header>
   <section class="shell section">
-    <div class="content-grid">
+    <div class="content-grid" data-post-grid>
       {posts.map((post) => (
-        <ContentCard href={postUrl(post)} title={post.data.title} description={post.data.description} date={post.data.pubDate} type="Post" />
+        <ContentCard
+          href={postUrl(post)}
+          title={post.data.title}
+          description={post.data.description}
+          date={post.data.pubDate}
+          type="Post"
+          tags={post.data.tags}
+          year={String(post.data.pubDate.getFullYear())}
+          readingSlug={post.id}
+        />
       ))}
     </div>
+    <p class="empty-state" data-post-empty hidden>No matching posts.</p>
   </section>
+  <script>
+    import { filterPosts } from '@/lib/post-discovery.js';
+    import { readReadingState } from '@/lib/reading-state.js';
+    import { enhanceSelects } from '@/lib/styled-select.js';
+
+    type PostData = {
+      element: HTMLElement;
+      title: string;
+      description: string;
+      tags: string[];
+      year: string;
+    };
+
+    const query = document.querySelector('[data-post-query]');
+    const year = document.querySelector('[data-post-year]');
+    const tagButtons = Array.from(document.querySelectorAll('[data-post-tag]'));
+    const cards = Array.from(document.querySelectorAll('[data-discovery-card]'));
+    const count = document.querySelector('[data-post-count]');
+    const empty = document.querySelector('[data-post-empty]');
+    let activeTag = 'all';
+
+    enhanceSelects();
+
+    const postData: PostData[] = cards.flatMap((card) => {
+      if (!(card instanceof HTMLElement)) return [];
+      return [{
+        element: card,
+        title: card.querySelector('h2')?.textContent ?? '',
+        description: card.querySelector('p')?.textContent ?? '',
+        tags: (card.getAttribute('data-discovery-tags') ?? '').split('|').filter(Boolean),
+        year: card.getAttribute('data-discovery-year') ?? '',
+      }];
+    });
+
+    function inputValue(element: Element | null) {
+      return element instanceof HTMLInputElement || element instanceof HTMLSelectElement ? element.value : '';
+    }
+
+    function updateReadingBadges() {
+      const state = readReadingState();
+
+      for (const card of cards) {
+        if (!(card instanceof HTMLElement)) continue;
+        const slug = card.getAttribute('data-reading-slug');
+        const badge = card.querySelector('[data-reading-badge]');
+        if (!(badge instanceof HTMLElement) || !slug) continue;
+
+        const entry = state.posts[slug];
+        badge.hidden = !entry;
+        badge.textContent = entry?.read ? 'Read' : 'Continue';
+      }
+    }
+
+    function applyFilters() {
+      const matches = new Set(filterPosts(postData, {
+        query: inputValue(query),
+        tag: activeTag,
+        year: inputValue(year) || 'all',
+      }).map((post: PostData) => post.element));
+
+      for (const post of postData) {
+        post.element.hidden = !matches.has(post.element);
+      }
+
+      if (count) count.textContent = `${matches.size} ${matches.size === 1 ? 'post' : 'posts'}`;
+      if (empty instanceof HTMLElement) empty.hidden = matches.size !== 0;
+    }
+
+    query?.addEventListener('input', applyFilters);
+    year?.addEventListener('change', applyFilters);
+    for (const button of tagButtons) {
+      button.addEventListener('click', () => {
+        activeTag = button.getAttribute('value') ?? 'all';
+        for (const item of tagButtons) item.classList.toggle('is-active', item === button);
+        applyFilters();
+      });
+    }
+
+    updateReadingBadges();
+    applyFilters();
+  </script>
 </BaseLayout>

@@ -37,13 +37,13 @@ const tags = collectArchiveTags(items);
 ---
 
 <BaseLayout title="Archive" description="Posts and Notes in reverse chronological order." canonicalUrl={absoluteUrl(paths.archive)}>
-  <header class="shell listing-header">
+  <header class="shell listing-header listing-header--compact">
     <p class="eyebrow">Chronological index</p>
     <h1>Archive</h1>
     <div class="archive-controls" aria-label="Archive filters">
       <label>
         <span>Type</span>
-        <select data-archive-type>
+        <select data-archive-type data-styled-select>
           <option value="all">All</option>
           <option value="post">Posts</option>
           <option value="note">Notes</option>
@@ -51,7 +51,7 @@ const tags = collectArchiveTags(items);
       </label>
       <label>
         <span>Tag</span>
-        <select data-archive-tag>
+        <select data-archive-tag data-styled-select>
           <option value="all">All tags</option>
           {tags.map((tag) => <option value={tag.normalize('NFKC').trim().toLocaleLowerCase()}>{tag}</option>)}
         </select>
@@ -73,10 +73,14 @@ const tags = collectArchiveTags(items);
     <p class="empty-state" data-archive-empty hidden>No matching entries.</p>
   </section>
   <script>
+    import { enhanceSelects } from '@/lib/styled-select.js';
+
     const typeFilter = document.querySelector('[data-archive-type]');
     const tagFilter = document.querySelector('[data-archive-tag]');
     const groups = Array.from(document.querySelectorAll('[data-archive-year]'));
     const empty = document.querySelector('[data-archive-empty]');
+
+    enhanceSelects();
 
     function selectedValue(control: Element | null) {
       return control instanceof HTMLSelectElement ? control.value : 'all';

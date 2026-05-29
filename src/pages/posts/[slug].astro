@@ -1,7 +1,8 @@
 ---
 import { render } from 'astro:content';
 import ContentLayout from '@/layouts/ContentLayout.astro';
-import { getVisiblePosts, getVisibleSources, postPath } from '@/lib/content';
+import { getVisiblePosts, getVisibleSources, postPath, postUrl } from '@/lib/content';
+import { adjacentPosts, relatedPosts } from '@/lib/reading-navigation.js';
 import { absoluteUrl } from '@/lib/url';
 
 export async function getStaticPaths() {
@@ -14,6 +15,17 @@ export async function getStaticPaths() {
 
 const { post } = Astro.props;
 const { Content, headings } = await render(post);
+const posts = await getVisiblePosts();
+const navigationPosts = posts.map((item) => ({
+  id: item.id,
+  href: postUrl(item),
+  title: item.data.title,
+  description: item.data.description,
+  date: item.data.pubDate.toISOString(),
+  tags: item.data.tags,
+}));
+const adjacent = adjacentPosts(navigationPosts, post.id);
+const related = relatedPosts(navigationPosts, post.id, 3);
 const sourcesById = new Map((await getVisibleSources()).map((source) => [source.id, source]));
 const sourceReferences = post.data.references.flatMap((reference) => {
   const source = sourcesById.get(reference.source);
@@ -42,6 +54,12 @@ const sourceReferences = post.data.references.flatMap((reference) => {
   type={post.data.draft ? 'Draft Post' : 'Post'}
   discussionLinks={post.data.discussionLinks}
   headings={headings}
+  readingSlug={post.id}
+  readingNavigation={{
+    previous: adjacent.previous,
+    next: adjacent.next,
+    related,
+  }}
   sourceReferences={sourceReferences}
 >
   <Content />

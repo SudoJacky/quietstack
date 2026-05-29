@@ -8,17 +8,34 @@ type Props = {
   date?: Date;
   type?: string;
   tags?: string[];
+  searchText?: string;
+  year?: string;
+  readingSlug?: string;
 };
 
-const { href, title, description, date, type, tags = [] } = Astro.props;
+const { href, title, description, date, type, tags = [], searchText, year, readingSlug } = Astro.props;
 const normalizedType = type?.toLocaleLowerCase() ?? '';
 const normalizedTags = tags.map((tag) => tag.normalize('NFKC').trim().toLocaleLowerCase()).join('|');
+const discoveryText = [title, description, searchText, year, ...tags].filter(Boolean).join(' ').normalize('NFKC').toLocaleLowerCase();
+const discoveryYear = year ?? (date ? String(date.getFullYear()) : '');
 ---
 
-<a class="card" href={href} data-archive-card data-content-type={normalizedType} data-content-tags={normalizedTags}>
+<a
+  class="card"
+  href={href}
+  data-archive-card
+  data-discovery-card
+  data-content-type={normalizedType}
+  data-content-tags={normalizedTags}
+  data-discovery-search={discoveryText}
+  data-discovery-tags={normalizedTags}
+  data-discovery-year={discoveryYear}
+  data-reading-slug={readingSlug}
+>
   <div class="card__meta">
     {type ? <span>{type}</span> : null}
     {date ? <span>{type ? ' / ' : ''}{formatDate(date)}</span> : null}
+    {readingSlug ? <span class="reading-badge" data-reading-badge hidden></span> : null}
   </div>
   <h2>{title}</h2>
   {description ? <p>{description}</p> : null}

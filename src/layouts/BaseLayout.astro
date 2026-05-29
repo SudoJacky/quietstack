@@ -1,5 +1,6 @@
 ---
 import BrandLogo from '@/components/BrandLogo.astro';
+import CommandPalette from '@/components/CommandPalette.astro';
 import SiteNav from '@/components/SiteNav.astro';
 import { routes, site } from '@/lib/site';
 import { absoluteUrl, assetUrl } from '@/lib/url';
@@ -79,5 +80,6 @@ const ogType = Astro.props.ogType ?? 'website';
         </nav>
       </div>
     </footer>
+    <CommandPalette />
   </body>
 </html>

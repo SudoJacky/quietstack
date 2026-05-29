@@ -13,5 +13,6 @@ test('theme keeps the article TOC indicator in a separate gutter', async () => {
 
   assert.match(css, /\.article-toc\s*\{[^}]*padding-left:\s*0\.9rem;/s);
   assert.match(css, /\.article-toc::before\s*\{[^}]*background:\s*color-mix\(in srgb,\s*var\(--border\) 72%,\s*transparent\);/s);
+  assert.match(css, /\.article-toc__indicator\s*\{[^}]*top:\s*0;/s);
   assert.match(css, /\.article-toc a\.is-active\s*\{[^}]*background:\s*transparent;/s);
 });

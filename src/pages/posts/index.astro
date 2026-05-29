@@ -21,7 +21,7 @@ const years = [...new Set(posts.map((post) => String(post.data.pubDate.getFullYe
       </label>
       <label class="discovery-year">
         <span>Year</span>
-        <select data-post-year>
+        <select data-post-year data-styled-select>
           <option value="all">All years</option>
           {years.map((year) => <option value={year}>{year}</option>)}
         </select>
@@ -53,6 +53,7 @@ const years = [...new Set(posts.map((post) => String(post.data.pubDate.getFullYe
   <script>
     import { filterPosts } from '@/lib/post-discovery.js';
     import { readReadingState } from '@/lib/reading-state.js';
+    import { enhanceSelects } from '@/lib/styled-select.js';
 
     type PostData = {
       element: HTMLElement;
@@ -69,6 +70,8 @@ const years = [...new Set(posts.map((post) => String(post.data.pubDate.getFullYe
     const count = document.querySelector('[data-post-count]');
     const empty = document.querySelector('[data-post-empty]');
     let activeTag = 'all';
+
+    enhanceSelects();
 
     const postData: PostData[] = cards.flatMap((card) => {
       if (!(card instanceof HTMLElement)) return [];

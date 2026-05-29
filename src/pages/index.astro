@@ -1,42 +1,100 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import ContentCard from '@/components/ContentCard.astro';
-import { getVisibleNotes, getVisiblePosts, noteTitle, noteUrl, postUrl } from '@/lib/content';
+import { getVisibleNotes, getVisiblePosts, getVisibleSources, noteTitle, noteUrl, postUrl } from '@/lib/content';
+import { buildHeroStats, publishingFlowSteps, sourceShowcase } from '@/lib/home-showcase.js';
 import { paths, routes, site } from '@/lib/site';
 import { absoluteUrl } from '@/lib/url';
 
-const posts = (await getVisiblePosts()).slice(0, 4);
-const notes = (await getVisibleNotes()).slice(0, 2);
+const allPosts = await getVisiblePosts();
+const allNotes = await getVisibleNotes();
+const allSources = await getVisibleSources();
+const posts = allPosts.slice(0, 4);
+const notes = allNotes.slice(0, 2);
+const heroStats = buildHeroStats({ posts: allPosts, notes: allNotes, sources: allSources });
 ---
 
 <BaseLayout title="Home" description={site.description} canonicalUrl={absoluteUrl(paths.home)}>
   <section class="hero">
     <div class="shell hero__grid">
-      <div>
+      <div class="hero__copy">
         <p class="eyebrow">Static personal publishing</p>
         <h1>{site.name}</h1>
-        <p>{site.description} Built around Markdown, stable URLs, static feeds, local search, and replaceable visual styles.</p>
+        <p>
+          {site.description} Publish Markdown, cite source attachments, rebuild Pagefind search, and ship a portable static site
+          from one repository-backed workflow.
+        </p>
+        <div class="hero__stats" aria-label="Quietstack content status">
+          {heroStats.map((stat) => (
+            <span class={`hero-stat hero-stat--${stat.tone}`}>
+              <strong>{stat.value}</strong>
+              <span>{stat.label}</span>
+            </span>
+          ))}
+        </div>
         <div class="hero__actions">
           <a class="button button--primary" href={routes.posts}>Start reading</a>
           <a class="button button--secondary" href={routes.archive}>Browse archive</a>
         </div>
       </div>
-      <div class="hero__panel">
-        <div class="code-window" aria-label="Quietstack publishing preview">
-          <div class="code-window__bar">
+      <div class="publishing-cockpit" aria-label="Quietstack publishing preview">
+        <div class="cockpit-toolbar">
+          <div class="cockpit-dots" aria-hidden="true">
             <span></span>
             <span></span>
             <span></span>
           </div>
-          <pre><code><span class="code-line">content/posts/hello-quietstack.md</span>
-<span class="code-line code-line--accent">title: "Hello Quietstack"</span>
-<span class="code-line">tags: ["astro", "quietstack"]</span>
-<span class="code-line">draft: false</span>
-<span class="code-line">---</span>
-<span class="code-line">Long-lived writing, static output.</span></code></pre>
-          <p>Build once, host the static artifact anywhere.</p>
+          <span>publish preview</span>
+          <strong>ready</strong>
+        </div>
+
+        <div class="cockpit-preview">
+          <p class="eyebrow">Article</p>
+          <h2>{sourceShowcase.articleTitle}</h2>
+          <p>
+            Long-lived writing stays readable while source-backed claims open the exact attachment context beside the article.
+          </p>
+          <span class="citation-chip">{sourceShowcase.citation}</span>
+        </div>
+
+        <div class="source-mini" aria-label="Source attachment excerpt">
+          <div>
+            <span>Source</span>
+            <strong>{sourceShowcase.sourceTitle}</strong>
+            <small>{sourceShowcase.sourcePath}</small>
+          </div>
+          <ol>
+            {sourceShowcase.lines.map((line) => (
+              <li class={line.highlighted ? 'is-highlighted' : undefined}>
+                <span>{line.number}</span>
+                <code>{line.text || ' '}</code>
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        <div class="build-command">
+          <span>$</span>
+          <code>{sourceShowcase.command}</code>
         </div>
       </div>
+    </div>
+  </section>
+
+  <section class="section pipeline-section" aria-labelledby="pipeline-title">
+    <div class="shell">
+      <div class="section__header">
+        <p class="eyebrow">Publishing system</p>
+        <h2 id="pipeline-title">From note to indexed static artifact.</h2>
+      </div>
+      <ol class="pipeline-strip">
+        {publishingFlowSteps.map((step) => (
+          <li>
+            <span>{step.label}</span>
+            <p>{step.description}</p>
+          </li>
+        ))}
+      </ol>
     </div>
   </section>
 

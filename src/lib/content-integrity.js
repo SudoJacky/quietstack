@@ -1,5 +1,8 @@
+import { buildSourceLines, duplicateSourceHeadingSlugs, findHighlightLines, parseSourceHref } from './source-viewer.js';
+
 const reservedPageSlugs = new Set(['posts', 'notes', 'archive', 'search', 'tags', 'series', 'rss.xml', 'sitemap.xml', 'assets']);
 const rootAbsoluteMarkdownLinkPattern = /(?<!!)\[[^\]]*\]\((\/(?!\/)[^)]+)\)/g;
+const sourceMarkdownLinkPattern = /(?<!!)\[[^\]]*\]\((source:[^)]+)\)/g;
 
 const tagKey = (tag) => tag.normalize('NFKC').trim().toLocaleLowerCase();
 
@@ -9,11 +12,26 @@ function collectRootAbsoluteLinks(entry) {
   return links.map((link) => `${entry.collection}/${entry.id}: ${link}`);
 }
 
+function collectSourceLinks(entry) {
+  const body = entry.body ?? '';
+  return [...body.matchAll(sourceMarkdownLinkPattern)].map((match) => match[1]);
+}
+
+function lineLabel(lines) {
+  return lines.start === lines.end ? `${lines.start}` : `${lines.start}-${lines.end}`;
+}
+
 export function collectContentIntegrityIssues({ posts, notes, pages, series, sources }) {
   const errors = [];
   const warnings = [];
   const seriesById = new Map(series.map((item) => [item.id, item]));
   const sourcesById = new Map(sources.map((item) => [item.id, item]));
+
+  for (const source of sources) {
+    for (const headingSlug of duplicateSourceHeadingSlugs(source.body ?? '')) {
+      warnings.push(`Source "${source.id}" has duplicate heading locator "${headingSlug}"; source citations will use the first match.`);
+    }
+  }
 
   for (const post of posts) {
     if (post.data.series) {
@@ -34,6 +52,32 @@ export function collectContentIntegrityIssues({ posts, notes, pages, series, sou
       } else if (!post.data.draft && source.data.draft) {
         warnings.push(
           `Public Post "${post.id}" references draft Source "${reference.source}"; the citation will render without source viewer data until the Source is published.`,
+        );
+      }
+    }
+
+    const referencesById = new Map(post.data.references.map((reference) => [reference.id, reference]));
+    for (const sourceLink of collectSourceLinks(post)) {
+      const locator = parseSourceHref(sourceLink);
+      if (!locator) continue;
+
+      const reference = referencesById.get(locator.id);
+      if (!reference) {
+        warnings.push(`Post "${post.id}" cites unknown Source reference id "${locator.id}".`);
+        continue;
+      }
+
+      const source = sourcesById.get(reference.source);
+      if (!source || source.data.draft) continue;
+
+      const lines = buildSourceLines(source.body ?? '');
+      if (locator.invalidFragment) {
+        warnings.push(`Post "${post.id}" Source citation "${locator.id}" fragment "${locator.invalidFragment}" could not be parsed.`);
+      } else if (locator.heading && !findHighlightLines(lines, locator)) {
+        warnings.push(`Post "${post.id}" Source citation "${locator.id}" heading "${locator.heading}" does not match Source "${source.id}".`);
+      } else if (locator.lines && locator.lines.end > lines.length) {
+        warnings.push(
+          `Post "${post.id}" Source citation "${locator.id}" lines "${lineLabel(locator.lines)}" exceed Source "${source.id}" length ${lines.length}.`,
         );
       }
     }

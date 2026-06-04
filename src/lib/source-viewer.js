@@ -1,10 +1,41 @@
 function parseLines(value) {
-  const [start, end = start] = String(value ?? '').split('-').map((line) => Number.parseInt(line, 10));
+  const parseLineNumber = (line) => {
+    const match = String(line ?? '').trim().match(/^L?(\d+)$/i);
+    return match ? Number.parseInt(match[1], 10) : Number.NaN;
+  };
+
+  const [start, end = start] = String(value ?? '').split('-').map(parseLineNumber);
   if (Number.isInteger(start) && Number.isInteger(end) && start > 0 && end >= start) {
     return { start, end };
   }
 
   return undefined;
+}
+
+function decodeFragment(value) {
+  try {
+    return decodeURIComponent(String(value ?? '').replaceAll('+', ' '));
+  } catch {
+    return String(value ?? '');
+  }
+}
+
+function parseLocatorFragment(rawFragment) {
+  const fragment = String(rawFragment ?? '');
+  const params = new URLSearchParams(rawFragment);
+  const heading = params.get('heading');
+  const lines = parseLines(params.get('lines') ?? params.get('line'));
+
+  if (heading || lines) return { heading, lines };
+  if (fragment.includes('=')) return { invalidFragment: decodeFragment(fragment) };
+
+  const bareFragment = decodeFragment(rawFragment).trim();
+  if (!bareFragment) return {};
+
+  const bareLines = parseLines(bareFragment);
+  if (bareLines) return { lines: bareLines };
+
+  return { heading: bareFragment };
 }
 
 export function sourceHashFromLocator(locator) {
@@ -24,7 +55,7 @@ export function parseSourceHash(hash) {
 
   const locator = { id };
   const heading = params.get('heading');
-  const lines = parseLines(params.get('lines'));
+  const lines = parseLines(params.get('lines') ?? params.get('line'));
 
   if (heading) locator.heading = heading;
   if (lines) locator.lines = lines;
@@ -40,13 +71,12 @@ export function parseSourceHref(href) {
   if (!id) return undefined;
 
   const locator = { id };
-  const params = new URLSearchParams(rawFragment);
-  const heading = params.get('heading');
-  const lines = params.get('lines');
+  const { heading, lines, invalidFragment } = parseLocatorFragment(rawFragment);
 
   if (heading) locator.heading = heading;
 
-  if (lines) locator.lines = parseLines(lines);
+  if (lines) locator.lines = lines;
+  if (invalidFragment) locator.invalidFragment = invalidFragment;
 
   return locator;
 }
@@ -77,11 +107,40 @@ export function buildSourceLines(markdown) {
     });
 }
 
+export function duplicateSourceHeadingSlugs(markdown) {
+  const seen = new Set();
+  const duplicates = new Set();
+
+  for (const line of buildSourceLines(markdown)) {
+    if (!line.headingSlug) continue;
+    if (seen.has(line.headingSlug)) duplicates.add(line.headingSlug);
+    seen.add(line.headingSlug);
+  }
+
+  return [...duplicates];
+}
+
+function isSectionLocator(value) {
+  return /^\d+(?:\.\d+)*\.?$/.test(value);
+}
+
+function matchesHeadingLocator(lineSlug, locatorHeading) {
+  if (!lineSlug || !locatorHeading) return false;
+
+  const locatorSlug = headingSlug(locatorHeading);
+  if (lineSlug === locatorHeading || lineSlug === locatorSlug) return true;
+
+  if (!isSectionLocator(locatorSlug)) return false;
+
+  const sectionSlug = locatorSlug.replace(/\.$/, '');
+  return lineSlug.startsWith(`${sectionSlug}-`) || lineSlug.startsWith(`${sectionSlug}.-`);
+}
+
 export function findHighlightLines(lines, locator) {
   if (locator?.lines) return locator.lines;
 
   if (locator?.heading) {
-    const heading = lines.find((line) => line.headingSlug === locator.heading);
+    const heading = lines.find((line) => matchesHeadingLocator(line.headingSlug, locator.heading));
     if (heading) return { start: heading.number, end: heading.number };
   }
 
@@ -110,11 +169,18 @@ function escapeHtml(value) {
     .replaceAll('"', '&quot;');
 }
 
-function renderSourceLines(source, locator) {
+export function renderSourceLines(source, locator) {
   const lines = buildSourceLines(source.body);
   const highlight = findHighlightLines(lines, locator);
+  const hasLocator = Boolean(locator?.heading || locator?.lines);
+  const unmatchedNotice =
+    hasLocator && !highlight
+      ? '<p class="source-viewer__notice" data-source-viewer-notice>No exact source location matched.</p>'
+      : '';
 
-  return lines
+  return (
+    unmatchedNotice +
+    lines
     .map((line) => {
       const isHighlighted = highlight && line.number >= highlight.start && line.number <= highlight.end;
       return `
@@ -124,7 +190,8 @@ function renderSourceLines(source, locator) {
         </div>
       `;
     })
-    .join('');
+    .join('')
+  );
 }
 
 export function initSourceViewer(root = document) {

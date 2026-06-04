@@ -1314,6 +1314,16 @@
   background: var(--surface-solid);
 }
 
+.source-viewer__notice {
+  margin: 0 1.25rem 0.75rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--accent-amber) 45%, var(--border));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent-amber) 18%, var(--surface-card));
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
 .source-line {
   display: grid;
   grid-template-columns: 4rem minmax(0, 1fr);

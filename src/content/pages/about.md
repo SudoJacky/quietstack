@@ -150,7 +150,19 @@ The result follows the experiment design. [Source](source:smith-2024#heading=exp
 The key conclusion appears in a specific range. [Source lines](source:smith-2024#lines=120-138)
 ```
 
-Clicking either link opens the source viewer from the right side of the article. The viewer highlights the requested heading or line range and can scroll independently from the article.
+The citation fragment can use a few equivalent forms:
+
+| Goal | Citation |
+| --- | --- |
+| Heading slug | `source:smith-2024#heading=experiments` |
+| Heading text or section number | `source:smith-2024#4.1` |
+| Line range | `source:smith-2024#lines=120-138` |
+| Compact line range | `source:smith-2024#L120-L138` |
+| Single line | `source:smith-2024#line=120` |
+
+Clicking any source citation opens the source viewer from the right side of the article. The viewer highlights the requested heading or line range and can scroll independently from the article. If the source opens but the exact locator no longer matches, the viewer shows a notice and still displays the source for manual inspection.
+
+Production checks warn when a source citation points to an unknown reference id, a heading that does not exist in the source, a line range outside the source, an invalid locator fragment, or a duplicate source heading slug.
 
 Source documents may be uploaded after the post is published. If a referenced source is missing or still marked as draft, the production build continues and the citation remains in the article, but the source viewer has no data for that citation until the source is uploaded and published.
 
